@@ -53,7 +53,7 @@ permissions:
 
 jobs:
   ab-match:
-    runs-on: [self-hosted, windows, X64, ab-test]
+    runs-on: [self-hosted, Ｗindows, X64, ab-test]
 
     steps:
       - name: Checkout candidate
