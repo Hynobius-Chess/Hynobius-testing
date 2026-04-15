@@ -1,0 +1,318 @@
+name: AB Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: "Baseline git ref (tag / branch / commit)"
+        required: false
+        default: "v0.2.5"
+        type: string
+
+      candidate_ref:
+        description: "Candidate git ref (tag / branch / commit), empty = current SHA"
+        required: false
+        default: ""
+        type: string
+
+      mode:
+        description: "Match mode: depth or tc"
+        required: false
+        default: "depth"
+        type: choice
+        options:
+          - depth
+          - tc
+
+      depth:
+        description: "Search depth when mode=depth"
+        required: false
+        default: "5"
+        type: string
+
+      tc:
+        description: "Time control when mode=tc, e.g. 10+0.1"
+        required: false
+        default: "10+0.1"
+        type: string
+
+      opening_pairs:
+        description: "Number of paired openings"
+        required: false
+        default: "10"
+        type: string
+
+      opening_file:
+        description: "Opening PGN file path on runner"
+        required: false
+        default: "candidate/bench/openings.pgn"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ab-match:
+    runs-on: [self-hosted, windows, X64, engine]
+
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.candidate_ref != '' && inputs.candidate_ref || github.sha }}
+          path: candidate
+
+      - name: Checkout baseline
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.baseline_ref }}
+          path: baseline
+
+      - name: Resolve SHAs
+        shell: pwsh
+        run: |
+          $baselineSha = git -C baseline rev-parse HEAD
+          $candidateSha = git -C candidate rev-parse HEAD
+
+          "BASELINE_SHA=$baselineSha" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CANDIDATE_SHA=$candidateSha" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build candidate
+        shell: pwsh
+        run: |
+          cmake -S candidate -B candidate/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake --build candidate/build --config Release
+
+      - name: Build baseline
+        shell: pwsh
+        run: |
+          cmake -S baseline -B baseline/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake --build baseline/build --config Release
+
+      - name: Prepare output folders
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          New-Item -ItemType Directory -Force -Path out/pgn | Out-Null
+          New-Item -ItemType Directory -Force -Path out/results | Out-Null
+
+      - name: Resolve executable paths
+        shell: pwsh
+        run: |
+          $baselineCandidates = @(
+            "baseline/build/Release/chess-analysis-engine.exe",
+            "baseline/build/chess-analysis-engine.exe",
+            "baseline/build/Release/Hynobius.exe",
+            "baseline/build/Hynobius.exe"
+          )
+
+          $candidateCandidates = @(
+            "candidate/build/Release/chess-analysis-engine.exe",
+            "candidate/build/chess-analysis-engine.exe",
+            "candidate/build/Release/Hynobius.exe",
+            "candidate/build/Hynobius.exe"
+          )
+
+          $baselineExe = $null
+          foreach ($p in $baselineCandidates) {
+            if (Test-Path $p) {
+              $baselineExe = (Resolve-Path $p).Path
+              break
+            }
+          }
+          if (-not $baselineExe) { throw "Baseline exe not found" }
+
+          $candidateExe = $null
+          foreach ($p in $candidateCandidates) {
+            if (Test-Path $p) {
+              $candidateExe = (Resolve-Path $p).Path
+              break
+            }
+          }
+          if (-not $candidateExe) { throw "Candidate exe not found" }
+
+          "BASELINE_EXE=$baselineExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CANDIDATE_EXE=$candidateExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Validate inputs
+        shell: pwsh
+        run: |
+          $mode = "${{ inputs.mode }}"
+          if ($mode -ne "depth" -and $mode -ne "tc") {
+            throw "Invalid mode: $mode. Must be 'depth' or 'tc'."
+          }
+
+          $openingFile = "${{ inputs.opening_file }}"
+          if (-not (Test-Path $openingFile)) {
+            throw "Opening file not found: $openingFile"
+          }
+
+          $pairs = [int]"${{ inputs.opening_pairs }}"
+          if ($pairs -le 0) {
+            throw "opening_pairs must be > 0"
+          }
+
+          if ($mode -eq "depth") {
+            $depth = [int]"${{ inputs.depth }}"
+            if ($depth -le 0) {
+              throw "depth must be > 0"
+            }
+          }
+
+      - name: Run paired-opening match
+        shell: pwsh
+        run: |
+          $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+          $pgn = "out/pgn/ab_match_$timestamp.pgn"
+          $txt = "out/results/ab_match_$timestamp.txt"
+
+          $mode = "${{ inputs.mode }}"
+          $pairs = [int]"${{ inputs.opening_pairs }}"
+          $openingFile = "${{ inputs.opening_file }}"
+
+          if ($mode -eq "depth") {
+            $eachArgs = @("proto=uci", "depth=${{ inputs.depth }}")
+          }
+          elseif ($mode -eq "tc") {
+            $eachArgs = @("proto=uci", "tc=${{ inputs.tc }}")
+          }
+          else {
+            throw "Invalid mode: $mode"
+          }
+
+          $argList = @(
+            "-engine", "name=baseline", "cmd=$env:BASELINE_EXE",
+            "-engine", "name=candidate", "cmd=$env:CANDIDATE_EXE",
+            "-each"
+          ) + $eachArgs + @(
+            "-openings", "file=$openingFile", "format=pgn", "order=random",
+            "-rounds", "$pairs",
+            "-repeat",
+            "-recover",
+            "-resign", "movecount=3", "score=800",
+            "-draw", "movenumber=40", "movecount=8", "score=10",
+            "-pgnout", $pgn
+          )
+
+          & "D:\Cute_Chess\cutechess-cli.exe" @argList | Tee-Object -FilePath $txt
+
+          "PGN_FILE=$pgn" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "RESULT_FILE=$txt" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Parse match result
+        shell: pwsh
+        run: |
+            $log = Get-Content $env:RESULT_FILE -Raw
+
+            $scoreLine = [regex]::Matches($log, 'Score of .*?:\s+(\d+)\s+-\s+(\d+)\s+-\s+(\d+)') | Select-Object -Last 1
+            if ($scoreLine.Count -gt 0) {
+            $wins = $scoreLine.Groups[1].Value
+            $losses = $scoreLine.Groups[2].Value
+            $draws = $scoreLine.Groups[3].Value
+            }
+            else {
+            $wins = "?"
+            $losses = "?"
+            $draws = "?"
+            }
+
+            $eloDiff = "?"
+            $eloError = "?"
+            $los = "?"
+            $drawRatio = "?"
+
+            $eloLine = [regex]::Match($log, 'Elo difference:\s*([-+]?\d+(?:\.\d+)?)\s*\+/-\s*(\d+(?:\.\d+)?),\s*LOS:\s*(\d+(?:\.\d+)?)\s*%,\s*DrawRatio:\s*(\d+(?:\.\d+)?)\s*%')
+            if ($eloLine.Success) {
+            $eloDiff = $eloLine.Groups[1].Value
+            $eloError = $eloLine.Groups[2].Value
+            $los = $eloLine.Groups[3].Value
+            $drawRatio = $eloLine.Groups[4].Value
+            }
+
+            $hasCrash = $false
+            if ($log -match "disconnect|stalls|illegal|error|lost on time|exception") {
+            $hasCrash = $true
+            }
+
+            "MATCH_WINS=$wins" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "MATCH_LOSSES=$losses" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "MATCH_DRAWS=$draws" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "MATCH_ELO_DIFF=$eloDiff" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "MATCH_ELO_ERROR=$eloError" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "MATCH_LOS=$los" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "MATCH_DRAW_RATIO=$drawRatio" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "MATCH_HAS_CRASH=$hasCrash" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Write JSON result
+        shell: pwsh
+        run: |
+          $json = @{
+            baseline = @{
+              ref = "${{ inputs.baseline_ref }}"
+              sha = "$env:BASELINE_SHA"
+            }
+            candidate = @{
+              ref = "${{ inputs.candidate_ref != '' && inputs.candidate_ref || github.sha }}"
+              sha = "$env:CANDIDATE_SHA"
+            }
+            result = @{
+              wins = if ($env:MATCH_WINS -ne "?") { [int]$env:MATCH_WINS } else { $null }
+              losses = if ($env:MATCH_LOSSES -ne "?") { [int]$env:MATCH_LOSSES } else { $null }
+              draws = if ($env:MATCH_DRAWS -ne "?") { [int]$env:MATCH_DRAWS } else { $null }
+              crash = ($env:MATCH_HAS_CRASH -eq "True")
+            }
+            elo = @{
+              diff = if ($env:MATCH_ELO_DIFF -ne "?") { [double]$env:MATCH_ELO_DIFF } else { $null }
+              error = if ($env:MATCH_ELO_ERROR -ne "?") { [double]$env:MATCH_ELO_ERROR } else { $null }
+              los = if ($env:MATCH_LOS -ne "?") { [double]$env:MATCH_LOS } else { $null }
+              draw_ratio = if ($env:MATCH_DRAW_RATIO -ne "?") { [double]$env:MATCH_DRAW_RATIO } else { $null }
+            }
+            config = @{
+              mode = "${{ inputs.mode }}"
+              depth = "${{ inputs.depth }}"
+              tc = "${{ inputs.tc }}"
+              opening_pairs = "${{ inputs.opening_pairs }}"
+            }
+            timestamp = (Get-Date).ToString("s")
+          }
+
+          $json | ConvertTo-Json -Depth 5 | Out-File out/results/result.json
+      - name: Write summary
+        shell: pwsh
+        run: |
+          Add-Content $env:GITHUB_STEP_SUMMARY "## AB Test"
+          Add-Content $env:GITHUB_STEP_SUMMARY ""
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Baseline ref: ${{ inputs.baseline_ref }}"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Candidate ref: ${{ inputs.candidate_ref != '' && inputs.candidate_ref || github.sha }}"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Baseline SHA: $env:BASELINE_SHA"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Candidate SHA: $env:CANDIDATE_SHA"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Mode: ${{ inputs.mode }}"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Depth: ${{ inputs.depth }}"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Time control: ${{ inputs.tc }}"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Opening pairs: ${{ inputs.opening_pairs }}"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Total games: $(2 * [int]${{ inputs.opening_pairs }})"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Opening file: ${{ inputs.opening_file }}"
+          Add-Content $env:GITHUB_STEP_SUMMARY ""
+          Add-Content $env:GITHUB_STEP_SUMMARY "### Result"
+          Add-Content $env:GITHUB_STEP_SUMMARY ""
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Baseline scoreline: W=$env:MATCH_WINS L=$env:MATCH_LOSSES D=$env:MATCH_DRAWS"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Crash / illegal / timeout detected: $env:MATCH_HAS_CRASH"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Elo diff: $env:MATCH_ELO_DIFF +/- $env:MATCH_ELO_ERROR"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- LOS: $env:MATCH_LOS %"
+          Add-Content $env:GITHUB_STEP_SUMMARY "- Draw ratio: $env:MATCH_DRAW_RATIO %"
+          Add-Content $env:GITHUB_STEP_SUMMARY ""
+          Add-Content $env:GITHUB_STEP_SUMMARY "### Last log lines"
+          Add-Content $env:GITHUB_STEP_SUMMARY ""
+          Add-Content $env:GITHUB_STEP_SUMMARY '```'
+          Get-Content $env:RESULT_FILE | Select-Object -Last 40 | Add-Content $env:GITHUB_STEP_SUMMARY
+          Add-Content $env:GITHUB_STEP_SUMMARY '```'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ab-test-${{ github.run_number }}
+          path: |
+            ${{ env.PGN_FILE }}
+            ${{ env.RESULT_FILE }}
