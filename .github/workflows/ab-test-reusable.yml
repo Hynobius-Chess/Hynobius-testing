@@ -70,7 +70,7 @@ permissions:
 
 jobs:
   ab-match:
-    runs-on: [self-hosted, windows, X64, engine]
+    runs-on: [ab-test]
 
     outputs:
       result_json: ${{ steps.export.outputs.result_json }}
@@ -83,6 +83,7 @@ jobs:
       - name: Checkout candidate
         uses: actions/checkout@v4
         with:
+          repository: Hynobius-Chess/Hynobius
           fetch-depth: 0
           ref: ${{ inputs.candidate_ref != '' && inputs.candidate_ref || github.sha }}
           path: candidate
@@ -90,6 +91,7 @@ jobs:
       - name: Checkout baseline
         uses: actions/checkout@v4
         with:
+          repository: Hynobius-Chess/Hynobius
           fetch-depth: 0
           ref: ${{ inputs.baseline_ref }}
           path: baseline
