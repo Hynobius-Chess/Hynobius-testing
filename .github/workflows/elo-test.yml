@@ -1,4 +1,4 @@
-name: AB Test Manual
+name: Elo Test
 
 on:
   workflow_dispatch:
