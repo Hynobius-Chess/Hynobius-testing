@@ -352,11 +352,17 @@ jobs:
           Get-Content $env:RESULT_FILE | Select-Object -Last 40 | Add-Content $env:GITHUB_STEP_SUMMARY
           Add-Content $env:GITHUB_STEP_SUMMARY '```'
 
+      - name: Tidy artifacts path
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out/artifact | Out-Null
+          Copy-Item $env:PGN_FILE out/artifact/
+          Copy-Item $env:RESULT_FILE out/artifact/
+          Copy-Item out/results/result.json out/artifact/
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
-            ${{ env.PGN_FILE }}
-            ${{ env.RESULT_FILE }}
-            out/results/result.json
+            out/artifact
