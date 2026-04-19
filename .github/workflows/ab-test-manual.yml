@@ -52,12 +52,14 @@ jobs:
   run-ab:
     uses: ./.github/workflows/ab-test-reusable.yml
     with:
-      baseline_ref: inputs.baseline_ref
-      candidate_ref: inputs.candidate_ref
-      mode: inputs.mode
-      tc: inputs.tc
-      opening_pairs: inputs.opening_pairs
-      opening_file: inputs.opening_file
+      baseline_ref: ${{ inputs.baseline_ref }}
+      candidate_ref: ${{ inputs.candidate_ref }}
+      mode: ${{ inputs.mode }}
+      depth: ${{ inputs.depth }}
+      tc: ${{ inputs.tc }}
+      opening_pairs: ${{ inputs.opening_pairs }}
+      opening_file: ${{ inputs.opening_file }}
+
   show-result:
     runs-on: ubuntu-latest
     needs: run-ab
