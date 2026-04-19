@@ -1,0 +1,37 @@
+name: AB Test Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_ref:
+        description: "Candidate git ref (tag / branch / commit)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  run-ab:
+    uses: ./.github/workflows/ab-test-reusable.yml
+    with:
+      baseline_ref: v0.2.2fix2
+      candidate_ref: ${{ inputs.candidate_ref }}
+      mode: tc
+      depth: null
+      tc: 10+0.1
+      opening_pairs: "800"
+      opening_file: "candidate/bench/openings_filtered.pgn"
+
+  show-result:
+    runs-on: ubuntu-latest
+    needs: run-ab
+    steps:
+      - name: Print outputs
+        run: |
+          echo 'artifact_name=${{ needs.run-ab.outputs.artifact_name }}'
+          echo 'elo_diff=${{ needs.run-ab.outputs.elo_diff }}'
+          echo 'elo_error=${{ needs.run-ab.outputs.elo_error }}'
+          echo 'los=${{ needs.run-ab.outputs.los }}'
+          echo '${{ needs.run-ab.outputs.result_json }}'
