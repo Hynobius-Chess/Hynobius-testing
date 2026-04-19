@@ -1,16 +1,15 @@
-name: AB Test
+name: AB Test Reusable
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       baseline_ref:
         description: "Baseline git ref (tag / branch / commit)"
         required: false
-        default: "v0.2.5"
         type: string
 
       candidate_ref:
-        description: "Candidate git ref (tag / branch / commit), empty = current SHA"
+        description: "Candidate git ref (tag / branch / commit), empty = caller SHA"
         required: false
         default: ""
         type: string
@@ -19,10 +18,7 @@ on:
         description: "Match mode: depth or tc"
         required: false
         default: "depth"
-        type: choice
-        options:
-          - depth
-          - tc
+        type: string
 
       depth:
         description: "Search depth when mode=depth"
@@ -48,12 +44,40 @@ on:
         default: "candidate/bench/openings.pgn"
         type: string
 
+    outputs:
+      result_json:
+        description: "AB test result JSON string"
+        value: ${{ jobs.ab-match.outputs.result_json }}
+
+      artifact_name:
+        description: "Artifact name containing PGN/log/result.json"
+        value: ${{ jobs.ab-match.outputs.artifact_name }}
+
+      elo_diff:
+        description: "Elo difference"
+        value: ${{ jobs.ab-match.outputs.elo_diff }}
+
+      elo_error:
+        description: "Elo error"
+        value: ${{ jobs.ab-match.outputs.elo_error }}
+
+      los:
+        description: "LOS"
+        value: ${{ jobs.ab-match.outputs.los }}
+
 permissions:
   contents: read
 
 jobs:
   ab-match:
     runs-on: [self-hosted, windows, X64, engine]
+
+    outputs:
+      result_json: ${{ steps.export.outputs.result_json }}
+      artifact_name: ${{ steps.export.outputs.artifact_name }}
+      elo_diff: ${{ steps.export.outputs.elo_diff }}
+      elo_error: ${{ steps.export.outputs.elo_error }}
+      los: ${{ steps.export.outputs.los }}
 
     steps:
       - name: Checkout candidate
@@ -165,6 +189,7 @@ jobs:
         shell: pwsh
         run: |
           $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+          $artifactName = "ab-test-${{ github.run_id }}-$timestamp"
           $pgn = "out/pgn/ab_match_$timestamp.pgn"
           $txt = "out/results/ab_match_$timestamp.txt"
 
@@ -200,50 +225,51 @@ jobs:
 
           "PGN_FILE=$pgn" | Out-File -FilePath $env:GITHUB_ENV -Append
           "RESULT_FILE=$txt" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Parse match result
         shell: pwsh
         run: |
-            $log = Get-Content $env:RESULT_FILE -Raw
+          $log = Get-Content $env:RESULT_FILE -Raw
 
-            $scoreLine = [regex]::Matches($log, 'Score of .*?:\s+(\d+)\s+-\s+(\d+)\s+-\s+(\d+)') | Select-Object -Last 1
-            if ($scoreLine.Count -gt 0) {
+          $scoreLine = [regex]::Matches($log, 'Score of .*?:\s+(\d+)\s+-\s+(\d+)\s+-\s+(\d+)') | Select-Object -Last 1
+          if ($scoreLine.Count -gt 0) {
             $wins = $scoreLine.Groups[1].Value
             $losses = $scoreLine.Groups[2].Value
             $draws = $scoreLine.Groups[3].Value
-            }
-            else {
+          }
+          else {
             $wins = "?"
             $losses = "?"
             $draws = "?"
-            }
+          }
 
-            $eloDiff = "?"
-            $eloError = "?"
-            $los = "?"
-            $drawRatio = "?"
+          $eloDiff = "?"
+          $eloError = "?"
+          $los = "?"
+          $drawRatio = "?"
 
-            $eloLine = [regex]::Match($log, 'Elo difference:\s*([-+]?\d+(?:\.\d+)?)\s*\+/-\s*(\d+(?:\.\d+)?),\s*LOS:\s*(\d+(?:\.\d+)?)\s*%,\s*DrawRatio:\s*(\d+(?:\.\d+)?)\s*%')
-            if ($eloLine.Success) {
+          $eloLine = [regex]::Match($log, 'Elo difference:\s*([-+]?\d+(?:\.\d+)?)\s*\+/-\s*(\d+(?:\.\d+)?),\s*LOS:\s*(\d+(?:\.\d+)?)\s*%,\s*DrawRatio:\s*(\d+(?:\.\d+)?)\s*%')
+          if ($eloLine.Success) {
             $eloDiff = $eloLine.Groups[1].Value
             $eloError = $eloLine.Groups[2].Value
             $los = $eloLine.Groups[3].Value
             $drawRatio = $eloLine.Groups[4].Value
-            }
+          }
 
-            $hasCrash = $false
-            if ($log -match "disconnect|stalls|illegal|error|lost on time|exception") {
+          $hasCrash = $false
+          if ($log -match "disconnect|stalls|illegal|error|lost on time|exception") {
             $hasCrash = $true
-            }
+          }
 
-            "MATCH_WINS=$wins" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "MATCH_LOSSES=$losses" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "MATCH_DRAWS=$draws" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "MATCH_ELO_DIFF=$eloDiff" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "MATCH_ELO_ERROR=$eloError" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "MATCH_LOS=$los" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "MATCH_DRAW_RATIO=$drawRatio" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "MATCH_HAS_CRASH=$hasCrash" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_WINS=$wins" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_LOSSES=$losses" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_DRAWS=$draws" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_ELO_DIFF=$eloDiff" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_ELO_ERROR=$eloError" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_LOS=$los" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_DRAW_RATIO=$drawRatio" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MATCH_HAS_CRASH=$hasCrash" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Write JSON result
         shell: pwsh
@@ -274,11 +300,26 @@ jobs:
               depth = "${{ inputs.depth }}"
               tc = "${{ inputs.tc }}"
               opening_pairs = "${{ inputs.opening_pairs }}"
+              opening_file = "${{ inputs.opening_file }}"
             }
             timestamp = (Get-Date).ToString("s")
           }
 
-          $json | ConvertTo-Json -Depth 5 | Out-File out/results/result.json
+          $json | ConvertTo-Json -Depth 5 | Out-File out/results/result.json -Encoding utf8
+
+      - name: Export outputs
+        id: export
+        shell: pwsh
+        run: |
+          $json = Get-Content "out/results/result.json" -Raw
+          $jsonSingleLine = $json -replace "`r", "" -replace "`n", ""
+
+          "artifact_name=$env:ARTIFACT_NAME" >> $env:GITHUB_OUTPUT
+          "elo_diff=$env:MATCH_ELO_DIFF" >> $env:GITHUB_OUTPUT
+          "elo_error=$env:MATCH_ELO_ERROR" >> $env:GITHUB_OUTPUT
+          "los=$env:MATCH_LOS" >> $env:GITHUB_OUTPUT
+          "result_json=$jsonSingleLine" >> $env:GITHUB_OUTPUT
+
       - name: Write summary
         shell: pwsh
         run: |
@@ -312,7 +353,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ab-test-${{ github.run_number }}
+          name: ${{ env.ARTIFACT_NAME }}
           path: |
             ${{ env.PGN_FILE }}
             ${{ env.RESULT_FILE }}
+            out/results/result.json
