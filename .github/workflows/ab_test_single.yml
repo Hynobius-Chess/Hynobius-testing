@@ -1,0 +1,91 @@
+name: AB Test Single Batch
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: "Baseline ref"
+        required: true
+        default: "main"
+
+      candidate_ref:
+        description: "Candidate ref"
+        required: true
+        default: "dev"
+
+      batch_index:
+        description: "Batch index"
+        required: true
+        default: "0"
+
+      pairs_per_batch:
+        description: "Opening pairs per batch"
+        required: true
+        default: "20"
+
+      tc:
+        description: "Time control"
+        required: true
+        default: "10+0.1"
+
+jobs:
+  run-ab-batch:
+    runs-on: [ab-test]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check Cute Chess CLI
+        shell: pwsh
+        run: |
+          if (!(Test-Path cutechess-cli)) {
+            throw "cutechess-cli not found in path"
+          }
+
+          cutechess-cli --version
+
+      - name: Build baseline
+        shell: pwsh
+        run: |
+          git fetch --all --tags
+          git checkout ${{ inputs.baseline_ref }}
+
+          cmake -S . -B build-baseline -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-baseline --config Release
+
+          New-Item -ItemType Directory -Force engines
+          Copy-Item build-baseline/Hynobius.exe engines/baseline.exe
+
+      - name: Build candidate
+        shell: pwsh
+        run: |
+          git checkout ${{ inputs.candidate_ref }}
+
+          cmake -S . -B build-candidate -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-candidate --config Release
+
+          New-Item -ItemType Directory -Force engines
+          Copy-Item build-candidate/Hynobius.exe engines/candidate.exe
+
+      - name: Run AB batch
+        shell: pwsh
+        run: |
+          python run_ab.py `
+            --cutechess "cutechess-cli" `
+            --baseline engines/baseline.exe `
+            --candidate engines/candidate.exe `
+            --opening-file bench/openings_filtered.pgn `
+            --batch-index ${{ inputs.batch_index }} `
+            --pairs-per-batch ${{ inputs.pairs_per_batch }} `
+            --tc "${{ inputs.tc }}" `
+            --out-dir results
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ab-batch-${{ inputs.batch_index }}
+          path: results/
