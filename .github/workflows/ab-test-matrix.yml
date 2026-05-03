@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Make batch matrix
         id: make-matrix
-        shell: powershell
+        shell: pwsh
         run: |
           $start = [int]"${{ inputs.start_batch }}"
           $count = [int]"${{ inputs.num_batches }}"
