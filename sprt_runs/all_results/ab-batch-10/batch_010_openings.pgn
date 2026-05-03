@@ -1,0 +1,49 @@
+[Event "Myers Defense, English"]
+[Result "*"]
+1.c4 g5 2.d4 Bg7 *
+
+
+[Event "Zilbermints Gambit, English"]
+[Result "*"]
+1.c4 g5 2.d4 e5 *
+
+
+[Event "Great Snake, English"]
+[Result "*"]
+1.c4 g6   *
+
+
+[Event "Adorjan System, English"]
+[Result "*"]
+1.c4 g6 2.e4 e5 *
+
+
+[Event "Beefeater"]
+[Result "*"]
+1.c4 g6 2.Nc3 Bg7 3.d4 c5 4.d5 Bxc3 5.bxc3 f5 *
+
+
+[Event "Anglo-Lithuanian Variation, English"]
+[Result "*"]
+1.c4 Nc6 *
+
+
+[Event "Anglo System, English; A15"]
+[Result "*"]
+1.c4 Nf6 *
+
+
+[Event "Mikenas-Carls Variation, English"]
+[Result "*"]
+1.c4 Nf6 *
+
+
+[Event "English Orangutan"]
+[Result "*"]
+1.c4 Nf6 2.b4 *
+
+
+[Event "Shirazi Shove"]
+[Result "*"]
+1.c4 Nf6 2.g3 h5 *
+

@@ -1,0 +1,49 @@
+[Event "Reversed Sicilian, English; A21"]
+[Result "*"]
+1.c4 e5 2.Nc3 *
+
+
+[Event "Kramnik-Shirov Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Bb4 *
+
+
+[Event "Troger Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 d6 3.g3 Be6 4.Bg2 Nc6 *
+
+
+[Event "Keres Defense, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 d6 3.g3 c6 *
+
+
+[Event "General Variation, King's English"]
+[Result "*"]
+1.c4 e5 2.Nc3 d6 3.Nf3 *
+
+
+[Event "Smyslov Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 d6 3.Nf3 Bg4 *
+
+
+[Event "Anglo-Dutch"]
+[Result "*"]
+1.c4 e5 2.Nc3 f5 *
+
+
+[Event "Reversed Closed Sicilian, English; A25"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 *
+
+
+[Event "Troger Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Be6 *
+
+
+[Event "Taimanov Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 *
+

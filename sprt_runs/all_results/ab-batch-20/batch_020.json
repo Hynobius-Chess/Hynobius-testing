@@ -1,0 +1,13 @@
+{
+  "batch_index": 20,
+  "pairs_per_batch": 10,
+  "expected_games": 20,
+  "tc": "10+0.1",
+  "pgn": "results\\batch_020.pgn",
+  "cutechess_returncode": 0,
+  "games": 20,
+  "wins": 9,
+  "losses": 2,
+  "draws": 9,
+  "unknown": 0
+}

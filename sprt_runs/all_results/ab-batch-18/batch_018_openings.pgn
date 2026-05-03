@@ -1,0 +1,49 @@
+[Event "Alekhine Attack, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nc3 dxc4 4.e4 *
+
+
+[Event "Winawer Counter Gambit, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nc3 e5 *
+
+
+[Event "Anti-Winawer Gambit, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nc3 e5 4.e4 *
+
+
+[Event "Modern Line, Slav; D11"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 *
+
+
+[Event "Slav Bishop's Game"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Bf5 *
+
+
+[Event "Bonet Gambit, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Bg5 *
+
+
+[Event "Exchange Variation, Slav; D13"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.cxd5 *
+
+
+[Event "Symmetrical Line, Slav; D14"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.cxd5 cxd5 5.Nc3 Nc6 6.Bf4 Bf5 *
+
+
+[Event "Trifunovic Variation, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.cxd5 cxd5 5.Nc3 Nc6 6.Bf4 Bf5 7.e3 e6 8.Qb3 Bb4 *
+
+
+[Event "Quiet Variation, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.e3 *
+

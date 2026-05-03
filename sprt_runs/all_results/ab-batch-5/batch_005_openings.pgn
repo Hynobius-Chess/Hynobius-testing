@@ -1,0 +1,49 @@
+[Event "Hungarian Attack, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 4.Rb1 *
+
+
+[Event "Closed System, King's English; A26"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.d3 *
+
+
+[Event "Closed System, Full Symmetry, King's English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.d3 d6 *
+
+
+[Event "Botvinnik System, King's English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.d3 d6 6.e4 *
+
+
+[Event "Bremen-Hort Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.e3 d6 6.Nge2 Be6 *
+
+
+[Event "Botvinnik Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.e4 *
+
+
+[Event "Three Knights System, English; A27"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.Nf3 *
+
+
+[Event "Four Knights Variation, English; A28"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.Nf3 Nf6 *
+
+
+[Event "Korchnoi Line, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.Nf3 Nf6 4.a3 *
+
+
+[Event "Flexible Line, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nc6 3.Nf3 Nf6 4.d3 *
+

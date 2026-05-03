@@ -1,0 +1,49 @@
+[Event "Somov Gambit, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 e5 4.Bxc4 *
+
+
+[Event "Betbeder; Veresov; Levitzky; Parisian"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 f5 *
+
+
+[Event "Versov; Betbeder; Schwartz Defense, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 f5 *
+
+
+[Event "Modern Defense, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 Nc6 *
+
+
+[Event "Alekhine System, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 Nf6 *
+
+
+[Event "Gunsberg Defense; Prianishenmo Gambit, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.Nc3 c5 4.d5 Nf6 5.Nc3 e6 6.e4 exd5 7.e5 *
+
+
+[Event "Blackburne's Move, QGA; Normal Variation, QGA; D21"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.Nf3 *
+
+
+[Event "Alekhine Variation, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.Nf3 a6 *
+
+
+[Event "D22"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.Nf3 a6 4.e3 *
+
+
+[Event "Haberditz Variation, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.Nf3 a6 4.e3 b5 *
+

@@ -1,0 +1,49 @@
+[Event "Clarendon Court Variation, Benoni"]
+[Result "*"]
+1.d4 c5 2.d5 f5 *
+
+
+[Event "Benoni-Staunton Gambit"]
+[Result "*"]
+1.d4 c5 2.d5 f5 3.e4 *
+
+
+[Event "Snail Variation, Benoni"]
+[Result "*"]
+1.d4 c5 2.d5 Na6 *
+
+
+[Event "Benoni-Indian Defense"]
+[Result "*"]
+1.d4 c5 2.d5 Nf6 *
+
+
+[Event "Vulture Defense, Benoni"]
+[Result "*"]
+1.d4 c5 2.d5 Nf6 3.c4 Ne4 *
+
+
+[Event "Woozle Defense, Benoni"]
+[Result "*"]
+1.d4 c5 2.d5 Nf6 3.Nc3 Qa5 *
+
+
+[Event "Kingside move order, Benoni"]
+[Result "*"]
+1.d4 c5 2.d5 Nf6 3.Nf3 *
+
+
+[Event "Habichd; Hawk Variation, Benoni"]
+[Result "*"]
+1.d4 c5 2.d5 Nf6 3.Nf3 c4 *
+
+
+[Event "Hawk Variation, Benoni"]
+[Result "*"]
+1.d4 c5 2.d5 Nf6 3.Nf3 e4 *
+
+
+[Event "Benoni Gambit Accepted"]
+[Result "*"]
+1.d4 c5 2.dxc5 *
+

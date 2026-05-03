@@ -1,0 +1,49 @@
+[Event "Neo Catalan Accepted, English"]
+[Result "*"]
+1.c4 e6 2.Nf3 d5 3.g3 Nf6 4.Bg2 dxc4 *
+
+
+[Event "Romanishin Gambit, English"]
+[Result "*"]
+1.c4 e6 2.Nf3 Nf6 3.g3 a6 4.Bg2 b5 *
+
+
+[Event "Anglo-Dutch Defense"]
+[Result "*"]
+1.c4 f5 *
+
+
+[Event "Anglo-Polish Dutch"]
+[Result "*"]
+1.c4 f5 2.b4 *
+
+
+[Event "Hickmann Gambit, English"]
+[Result "*"]
+1.c4 f5 2.e4 *
+
+
+[Event "Hickmann Gambit, English"]
+[Result "*"]
+1.c4 f5 2.e4 fxe4 3.d3 *
+
+
+[Event "Porcupine Variation, English"]
+[Result "*"]
+1.c4 f5 2.e4 fxe4 3.Nc3 Nf6 4.g4 *
+
+
+[Event "Wade Gambit, English"]
+[Result "*"]
+1.c4 f5 2.g4 *
+
+
+[Event "English Spike"]
+[Result "*"]
+1.c4 f5 2.g4 *
+
+
+[Event "Chabanon Gambit, English"]
+[Result "*"]
+1.c4 f5 2.Nf3 d6 3.e4 *
+

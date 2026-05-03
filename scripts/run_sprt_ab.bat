@@ -24,6 +24,20 @@ echo Are you sure to run this AB test?
 
 pause
 
-python sprt_controller.py --workflow ab-test-matrix.yml --workflow-ref main --baseline-ref %BASELINE% --candidate-ref %CANDIDATE% --start-batch %START_BATCH% --batches-per-round %BATCH_COUNT% --max-batches %MAX_BATCH_COUNT% --pairs-per-batch %PAIRS_PER_BATCH% --tc %TC%
+python sprt_controller.py ^
+  --workflow ab-test-matrix.yml ^
+  --workflow-ref main ^
+  --baseline-ref %BASELINE% ^
+  --candidate-ref %CANDIDATE% ^
+  --start-batch %START_BATCH% ^
+  --batches-per-round %BATCH_COUNT% ^
+  --max-batches %MAX_BATCH_COUNT% ^
+  --pairs-per-batch %PAIRS_PER_BATCH% ^
+  --tc "%TC%" ^
+  --sprt-elo0 0 ^
+  --sprt-elo1 10 ^
+  --sprt-alpha 0.05 ^
+  --sprt-beta 0.05 ^
+  --poll-seconds 10
 
 pause

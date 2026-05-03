@@ -1,0 +1,49 @@
+[Event "Kapengut; Smyslov; Modern V, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nf6 3.g3 Bb4 *
+
+
+[Event "Keres Variation, English; A23"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nf6 3.g3 c6 *
+
+
+[Event "Reversed Dragon, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nf6 3.g3 d5 *
+
+
+[Event "Fianchetto Lines, Two Knights Variation, English; A24"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nf6 3.g3 g6 *
+
+
+[Event "Prickly Pawn Pass System, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nf6 3.g3 g6 4.Bg2 Bg7 5.d3 d6 6.e4 O-O 7.Nge2 c6 8.O-O a6 *
+
+
+[Event "Bellon Gambit, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nf6 3.Nf3 e4 4.Ng5 b5 *
+
+
+[Event "Erbenheimer Gambit, English"]
+[Result "*"]
+1.c4 e5 2.Nc3 Nf6 3.Nf3 e4 4.Ng5 Ng4 *
+
+
+[Event "Nimzovich Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nf3 *
+
+
+[Event "Nimzovich-Flohr Variation, English"]
+[Result "*"]
+1.c4 e5 2.Nf3 e4 *
+
+
+[Event "English Queen"]
+[Result "*"]
+1.c4 e5 2.Qa4 *
+

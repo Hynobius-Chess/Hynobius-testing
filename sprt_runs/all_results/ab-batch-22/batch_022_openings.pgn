@@ -1,0 +1,49 @@
+[Event "Old Variation, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e3 *
+
+
+[Event "Korchnoi Gambit, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e3 e5 4.Bc4 exd4 5.Qb3 Qe7 6.Kf1 *
+
+
+[Event "Novikov Gambit, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e3 e5 4.Bc4 exd4 5.Qb3 Qe7 6.Nd2 *
+
+
+[Event "Christensen Gambit, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e3 e5 4.Bc4 exd4 5.Qb3 Qe7 6.Nf3 *
+
+
+[Event "Saduleto Variation, QGA; Central Variation, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 *
+
+
+[Event "Greco Variation, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 b5 *
+
+
+[Event "Rubinstein Variation, QGA  "]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 c5 *
+
+
+[Event "Yefimov Gambit, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 c5 4.d5 b5 *
+
+
+[Event "Linares Variation, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 c5 4.d5 Nf6 5.Nc3 b5 *
+
+
+[Event "McDonnell Defense, QGA"]
+[Result "*"]
+1.d4 d5 2.c4 dxc4 3.e4 e5 *
+

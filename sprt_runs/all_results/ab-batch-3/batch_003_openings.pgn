@@ -1,0 +1,49 @@
+[Event "A12"]
+[Result "*"]
+1.c4 c6 2.Nf3 d5 3.b3 *
+
+
+[Event "Bled Variation, English"]
+[Result "*"]
+1.c4 c6 2.Nf3 d5 3.b3 Nf6 4.g3 g6 *
+
+
+[Event "Anglo Scandanavian Defense, English"]
+[Result "*"]
+1.c4 d5 *
+
+
+[Event "Loehn Gambit, English"]
+[Result "*"]
+1.c4 d5 2.cxd5 e6 *
+
+
+[Event "Schulz Gambit, English"]
+[Result "*"]
+1.c4 d5 2.cxd5 Nf6 *
+
+
+[Event "Malvinas Variation, English"]
+[Result "*"]
+1.c4 d5 2.cxd5 Qxd5 3.Nc3 Qa5 *
+
+
+[Event "King's English; A20"]
+[Result "*"]
+1.c4 e5   *
+
+
+[Event "Kahiko-Hula Gambit, English"]
+[Result "*"]
+1.c4 e5 2.e3 Nf6 4.f4 exf4 4.Nf3 *
+
+
+[Event "Double Whammy, English"]
+[Result "*"]
+1.c4 e5 2.f4 *
+
+
+[Event "Drill Variation, English"]
+[Result "*"]
+1.c4 e5 2.g3 h5 *
+

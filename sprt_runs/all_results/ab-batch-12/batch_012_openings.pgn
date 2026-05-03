@@ -1,0 +1,49 @@
+[Event "Kevitz Defense, English"]
+[Result "*"]
+1.c4 Nf6 2.Nc3 e6 3.e4 Nc6 *
+
+
+[Event "Queen's Indian Formation, English"]
+[Result "*"]
+1.c4 Nf6 2.Nc3 e6 3.Nf3 b6 *
+
+
+[Event "Nimzo-English Opening"]
+[Result "*"]
+1.c4 Nf6 2.Nc3 e6 3.Nf3 Bb4 *
+
+
+[Event "Zviagintsev-Krasenkov Attack, English"]
+[Result "*"]
+1.c4 Nf6 2.Nc3 e6 3.Nf3 Bb4 4.g4 *
+
+
+[Event "Anti-anti-grunfeld"]
+[Result "*"]
+1.c4 Nf6 2.Nc3 g6 3.Nf3 Bg7 4.e4 *
+
+
+[Event "King's Knight Variation, English"]
+[Result "*"]
+1.c4 Nf6 2.Nf3 *
+
+
+[Event "Romanishin Variation, English"]
+[Result "*"]
+1.c4 Nf6 2.Nf3 e6 3.g3 a6 *
+
+
+[Event "Queen Pawn Opening; A40"]
+[Result "*"]
+1.d4 *
+
+
+[Event "St George's Gambit"]
+[Result "*"]
+1.d4 a6 2.c4 b5 3.e4 e6 4.cxb5 axb5 *
+
+
+[Event "Polish Defense"]
+[Result "*"]
+1.d4 b5   *
+

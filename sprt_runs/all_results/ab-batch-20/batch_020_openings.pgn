@@ -1,0 +1,49 @@
+[Event "Alapin Variation, Slav; D16"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 *
+
+
+[Event "Czech Defense; Open Slav Defense; D17"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 *
+
+
+[Event "Dutch Variation, Slav; D18"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.e3 *
+
+
+[Event "Main Line, Czech Variation, Slav; D19"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.e3 e6 7.Bxc4 Bb4 8.O-O O-O 9.Qe2 *
+
+
+[Event "Mareschall Variation, Slav; Lasker Variation"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.e3 Na6 *
+
+
+[Event "Krause Attack, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.Ne5 *
+
+
+[Event "Wiesbaden Variation, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.Ne5 e6 *
+
+
+[Event "Sharp Line, Wiesbaden Variation, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.Ne5 e6 7.f3 Bb4 8.e4 *
+
+
+[Event "Fazekas Gambit, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.Ne5 Na6 7.e4 *
+
+
+[Event "Carlsbad Variation, Slav"]
+[Result "*"]
+1.d4 d5 2.c4 c6 3.Nf3 Nf6 4.Nc3 dxc4 5.a4 Bf5 6.Ne5 Nbd7 7.Nxc4 Qc7 8.g3 e5 *
+
