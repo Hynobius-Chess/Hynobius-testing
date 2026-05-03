@@ -33,10 +33,11 @@ jobs:
     runs-on: [ab-test]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout testing repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          path: testing
 
       - name: Checkout baseline
         uses: actions/checkout@v4
@@ -69,8 +70,8 @@ jobs:
       - name: Build baseline
         shell: pwsh
         run: |
-          cmake -S baseline -B baseline/build -DCMAKE_BUILD_TYPE=Release
-          cmake --build baseline/build --config Release
+          cmake -S candidate -B candidate/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake --build candidate/build --config Release
 
           New-Item -ItemType Directory -Force engines
           Copy-Item baseline/build/Hynobius.exe engines/baseline.exe
@@ -78,8 +79,8 @@ jobs:
       - name: Build candidate
         shell: pwsh
         run: |
-          cmake -S candidate -B candidate/build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build-candidate --config Release
+          cmake -S baseline -B baseline/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake --build baseline/build --config Release
 
           New-Item -ItemType Directory -Force engines
           Copy-Item candidate/build/Hynobius.exe engines/candidate.exe
@@ -87,11 +88,11 @@ jobs:
       - name: Run AB batch
         shell: pwsh
         run: |
-          python run_ab.py `
+          python testing/run_ab.py `
             --cutechess "cutechess-cli" `
             --baseline engines/baseline.exe `
             --candidate engines/candidate.exe `
-            --opening-file bench/openings_filtered.pgn `
+            --opening-file candidate/bench/openings_filtered.pgn `
             --batch-index ${{ inputs.batch_index }} `
             --pairs-per-batch ${{ inputs.pairs_per_batch }} `
             --tc "${{ inputs.tc }}" `
