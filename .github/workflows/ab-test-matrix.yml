@@ -127,7 +127,6 @@ jobs:
           & "$env:PYTHON_EXE" testing/merge_ab.py `
             --input-dir all-results `
             --out-dir merged `
-            --start-batch ${{ inputs.start_batch }} `
             --expected-batches ${{ inputs.num_batches }}
 
       - name: Write GitHub step summary
