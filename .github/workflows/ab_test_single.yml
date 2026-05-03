@@ -1,38 +1,49 @@
 name: AB Test Single Batch
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       baseline_ref:
         description: "Baseline ref"
         required: true
         default: "main"
+        type: string
 
       candidate_ref:
         description: "Candidate ref"
         required: true
         default: "dev"
+        type: string
 
       batch_index:
         description: "Batch index"
         required: true
         default: "0"
+        type: string
 
       pairs_per_batch:
         description: "Opening pairs per batch"
         required: true
         default: "20"
+        type: string
 
       tc:
         description: "Time control"
         required: true
         default: "10+0.1"
+        type: string
 
 jobs:
   run-ab-batch:
     runs-on: [ab-test]
 
     steps:
+      - name: Checkout testing repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: testing
+
       - name: Checkout candidate
         uses: actions/checkout@v4
         with:

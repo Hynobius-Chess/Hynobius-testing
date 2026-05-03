@@ -1,0 +1,80 @@
+name: AB Test Matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: "Baseline ref"
+        required: true
+        default: "main"
+
+      candidate_ref:
+        description: "Candidate ref"
+        required: true
+        default: "dev"
+
+      pairs_per_batch:
+        description: "Opening pairs per batch"
+        required: true
+        default: "20"
+
+      start_batch:
+        description: "Start batch index"
+        required: true
+        default: "0"
+
+      num_batches:
+        description: "Number of batches to run (batch_number * 40 = final game number)"
+        required: true
+        default: "5"
+
+      tc:
+        description: "Time control"
+        required: true
+        default: "10+0.1"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.make-matrix.outputs.matrix }}
+
+    steps:
+      - name: Make batch matrix
+        id: make-matrix
+        shell: bash
+        run: |
+          START=${{ inputs.start_batch }}
+          COUNT=${{ inputs.num_batches }}
+
+          if [ "$COUNT" -le 0 ]; then
+            echo "num_batches must be > 0"
+            exit 1
+          fi
+
+          END=$((START + COUNT - 1))
+
+          JSON="{\"batch\":["
+          for i in $(seq $START $END); do
+            if [ "$i" != "$START" ]; then
+              JSON="$JSON,"
+            fi
+            JSON="$JSON$i"
+          done
+          JSON="$JSON]}"
+
+          echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
+          echo "Generated matrix: $JSON"
+
+  run-batches:
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    uses: ./.github/workflows/ab_test_single.yml
+    with:
+      baseline_ref: ${{ inputs.baseline_ref }}
+      candidate_ref: ${{ inputs.candidate_ref }}
+      batch_index: ${{ matrix.batch }}
+      pairs_per_batch: ${{ inputs.pairs_per_batch }}
+      tc: ${{ inputs.tc }}
