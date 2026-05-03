@@ -49,6 +49,23 @@ jobs:
           ref: ${{ inputs.baseline_ref }}
           path: baseline
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check Cute Chess CLI
+        shell: pwsh
+        run: |
+          $cutechess = Get-Command cutechess-cli.exe -ErrorAction SilentlyContinue
+
+          if ($null -eq $cutechess) {
+            throw "cutechess-cli.exe not found in PATH"
+          }
+
+          Write-Host "Found cutechess-cli at: $($cutechess.Source)"
+          cutechess-cli.exe --version
+
       - name: Resolve SHAs
         shell: pwsh
         run: |
