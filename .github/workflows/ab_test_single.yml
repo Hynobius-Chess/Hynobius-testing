@@ -37,15 +37,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Check Cute Chess CLI
         shell: pwsh
         run: |
-          if (!(Test-Path cutechess-cli)) {
-            throw "cutechess-cli not found in path"
+          $cutechess = Get-Command cutechess-cli.exe -ErrorAction SilentlyContinue
+
+          if ($null -eq $cutechess) {
+            throw "cutechess-cli.exe not found in PATH"
           }
 
-          cutechess-cli --version
+          Write-Host "Found cutechess-cli at: $($cutechess.Source)"
+          cutechess-cli.exe --version
 
       - name: Build baseline
         shell: pwsh
