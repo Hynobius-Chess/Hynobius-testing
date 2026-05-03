@@ -33,6 +33,31 @@ on:
         required: true
         default: "10+0.1"
 
+      sprt:
+        description: "Enable SPRT"
+        required: true
+        default: "true"
+
+      sprt_elo0:
+        description: "SPRT Elo0"
+        required: true
+        default: "0"
+
+      sprt_elo1:
+        description: "SPRT Elo1"
+        required: true
+        default: "10"
+
+      sprt_alpha:
+        description: "SPRT alpha"
+        required: true
+        default: "0.05"
+
+      sprt_beta:
+        description: "SPRT beta"
+        required: true
+        default: "0.05"
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -124,10 +149,24 @@ jobs:
       - name: Merge results
         shell: powershell
         run: |
+          $sprtArgs = @()
+          if ("${{ inputs.sprt }}" -eq "true") {
+            $sprtArgs += "--sprt"
+            $sprtArgs += "--sprt-elo0"
+            $sprtArgs += "${{ inputs.sprt_elo0 }}"
+            $sprtArgs += "--sprt-elo1"
+            $sprtArgs += "${{ inputs.sprt_elo1 }}"
+            $sprtArgs += "--sprt-alpha"
+            $sprtArgs += "${{ inputs.sprt_alpha }}"
+            $sprtArgs += "--sprt-beta"
+            $sprtArgs += "${{ inputs.sprt_beta }}"
+          }
+
           & "$env:PYTHON_EXE" testing/merge_ab.py `
             --input-dir all-results `
             --out-dir merged `
-            --expected-batches ${{ inputs.num_batches }}
+            --expected-batches ${{ inputs.num_batches }} `
+            @sprtArgs
 
       - name: Write GitHub step summary
         shell: powershell
