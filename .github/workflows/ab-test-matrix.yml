@@ -42,31 +42,28 @@ jobs:
     steps:
       - name: Make batch matrix
         id: make-matrix
-        shell: bash
+        shell: powershell
         run: |
-          START=${{ inputs.start_batch }}
-          COUNT=${{ inputs.num_batches }}
+          $start = [int]"${{ inputs.start_batch }}"
+          $count = [int]"${{ inputs.num_batches }}"
 
-          if [ "$COUNT" -le 0 ]; then
-            echo "num_batches must be > 0"
-            exit 1
-          fi
+          if ($count -le 0) {
+            throw "num_batches must be > 0"
+          }
 
-          END=$((START + COUNT - 1))
+          $batches = @()
+          for ($i = $start; $i -lt $start + $count; $i++) {
+            $batches += $i
+          }
 
-          JSON="{\"batch\":["
-          for i in $(seq $START $END); do
-            if [ "$i" != "$START" ]; then
-              JSON="$JSON,"
-            fi
-            JSON="$JSON$i"
-          done
-          JSON="$JSON]}"
+          $json = @{ batch = $batches } | ConvertTo-Json -Compress
 
-          echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
-          echo "Generated matrix: $JSON"
+          Write-Host "Generated matrix: $json"
+          "matrix=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
   run-batches:
+    needs: prepare
+
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
