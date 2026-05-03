@@ -33,11 +33,13 @@ jobs:
     runs-on: [ab-test]
 
     steps:
-      - name: Checkout testing repository
+      - name: Checkout candidate
         uses: actions/checkout@v4
         with:
+          repository: Hynobius-Chess/Hynobius
           fetch-depth: 0
-          path: testing
+          ref: ${{ inputs.candidate_ref != '' && inputs.candidate_ref || github.sha }}
+          path: candidate
 
       - name: Checkout baseline
         uses: actions/checkout@v4
@@ -47,51 +49,72 @@ jobs:
           ref: ${{ inputs.baseline_ref }}
           path: baseline
 
-      - name: Checkout candidate
-        uses: actions/checkout@v4
-        with:
-          repository: Hynobius-Chess/Hynobius
-          fetch-depth: 0
-          ref: ${{ inputs.candidate_ref != '' && inputs.candidate_ref || github.sha }}
-          path: candidate
-
-      - name: Check Cute Chess CLI
+      - name: Resolve SHAs
         shell: pwsh
         run: |
-          $cutechess = Get-Command cutechess-cli.exe -ErrorAction SilentlyContinue
+          $baselineSha = git -C baseline rev-parse HEAD
+          $candidateSha = git -C candidate rev-parse HEAD
 
-          if ($null -eq $cutechess) {
-            throw "cutechess-cli.exe not found in PATH"
-          }
+          "BASELINE_SHA=$baselineSha" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CANDIDATE_SHA=$candidateSha" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-          Write-Host "Found cutechess-cli at: $($cutechess.Source)"
-          cutechess-cli.exe --version
-
-      - name: Build baseline
+      - name: Build candidate
         shell: pwsh
         run: |
           cmake -S candidate -B candidate/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
           cmake --build candidate/build --config Release
 
-          New-Item -ItemType Directory -Force engines
-          Copy-Item baseline/build/Hynobius.exe engines/baseline.exe
-
-      - name: Build candidate
+      - name: Build baseline
         shell: pwsh
         run: |
           cmake -S baseline -B baseline/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
           cmake --build baseline/build --config Release
 
-          New-Item -ItemType Directory -Force engines
-          Copy-Item candidate/build/Hynobius.exe engines/candidate.exe
+      - name: Resolve executable paths
+        shell: pwsh
+        run: |
+          $baselineCandidates = @(
+            "baseline/build/Release/chess-analysis-engine.exe",
+            "baseline/build/chess-analysis-engine.exe",
+            "baseline/build/Release/Hynobius.exe",
+            "baseline/build/Hynobius.exe"
+          )
+
+          $candidateCandidates = @(
+            "candidate/build/Release/chess-analysis-engine.exe",
+            "candidate/build/chess-analysis-engine.exe",
+            "candidate/build/Release/Hynobius.exe",
+            "candidate/build/Hynobius.exe"
+          )
+
+          $baselineExe = $null
+          foreach ($p in $baselineCandidates) {
+            if (Test-Path $p) {
+              $baselineExe = (Resolve-Path $p).Path
+              break
+            }
+          }
+          if (-not $baselineExe) { throw "Baseline exe not found" }
+
+          $candidateExe = $null
+          foreach ($p in $candidateCandidates) {
+            if (Test-Path $p) {
+              $candidateExe = (Resolve-Path $p).Path
+              break
+            }
+          }
+          if (-not $candidateExe) { throw "Candidate exe not found" }
+
+          "BASELINE_EXE=$baselineExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CANDIDATE_EXE=$candidateExe" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run AB batch
         shell: pwsh
         run: |
           python testing/run_ab.py `
             --cutechess "cutechess-cli" `
-            --baseline engines/baseline.exe `
-            --candidate engines/candidate.exe `
+            --baseline $env:BASELINE_EXE `
+            --candidate $env:CANDIDATE_EXE `
             --opening-file candidate/bench/openings_filtered.pgn `
             --batch-index ${{ inputs.batch_index }} `
             --pairs-per-batch ${{ inputs.pairs_per_batch }} `
