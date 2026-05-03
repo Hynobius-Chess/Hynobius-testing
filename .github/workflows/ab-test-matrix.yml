@@ -101,85 +101,85 @@ jobs:
       pairs_per_batch: ${{ inputs.pairs_per_batch }}
       tc: ${{ inputs.tc }}
 
-  merge-results:
-    name: Merge AB results
-    runs-on: [ab-test]
-    needs: run-batches
-    if: always()
+  # merge-results:
+  #   name: Merge AB results
+  #   runs-on: [ab-test]
+  #   needs: run-batches
+  #   if: always()
 
-    steps:
-      - name: Checkout testing repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          path: testing
+  #   steps:
+  #     - name: Checkout testing repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #         path: testing
 
-      - name: Prepare portable Python
-        shell: powershell
-        run: |
-          $version = "3.12.10"
-          $pythonDir = "$env:RUNNER_TEMP\python-$version"
-          $pythonExe = "$pythonDir\python.exe"
+  #     - name: Prepare portable Python
+  #       shell: powershell
+  #       run: |
+  #         $version = "3.12.10"
+  #         $pythonDir = "$env:RUNNER_TEMP\python-$version"
+  #         $pythonExe = "$pythonDir\python.exe"
 
-          if (!(Test-Path $pythonExe)) {
-            $zip = "$env:RUNNER_TEMP\python-$version-embed-amd64.zip"
-            $url = "https://www.python.org/ftp/python/$version/python-$version-embed-amd64.zip"
+  #         if (!(Test-Path $pythonExe)) {
+  #           $zip = "$env:RUNNER_TEMP\python-$version-embed-amd64.zip"
+  #           $url = "https://www.python.org/ftp/python/$version/python-$version-embed-amd64.zip"
 
-            Invoke-WebRequest -Uri $url -OutFile $zip
+  #           Invoke-WebRequest -Uri $url -OutFile $zip
 
-            New-Item -ItemType Directory -Force $pythonDir | Out-Null
-            Expand-Archive -Path $zip -DestinationPath $pythonDir -Force
-          }
+  #           New-Item -ItemType Directory -Force $pythonDir | Out-Null
+  #           Expand-Archive -Path $zip -DestinationPath $pythonDir -Force
+  #         }
 
-          & $pythonExe --version
-          "PYTHON_EXE=$pythonExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+  #         & $pythonExe --version
+  #         "PYTHON_EXE=$pythonExe" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Download batch artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: ab-batch-*
-          path: all-results
-          merge-multiple: true
+  #     - name: Download batch artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         pattern: ab-batch-*
+  #         path: all-results
+  #         merge-multiple: true
 
-      - name: List downloaded files
-        shell: powershell
-        run: |
-          Get-ChildItem all-results -Recurse | Select-Object FullName
+  #     - name: List downloaded files
+  #       shell: powershell
+  #       run: |
+  #         Get-ChildItem all-results -Recurse | Select-Object FullName
 
-      - name: Merge results
-        shell: powershell
-        run: |
-          $sprtArgs = @()
-          if ("${{ inputs.sprt }}" -eq "true") {
-            $sprtArgs += "--sprt"
-            $sprtArgs += "--sprt-elo0"
-            $sprtArgs += "${{ inputs.sprt_elo0 }}"
-            $sprtArgs += "--sprt-elo1"
-            $sprtArgs += "${{ inputs.sprt_elo1 }}"
-            $sprtArgs += "--sprt-alpha"
-            $sprtArgs += "${{ inputs.sprt_alpha }}"
-            $sprtArgs += "--sprt-beta"
-            $sprtArgs += "${{ inputs.sprt_beta }}"
-          }
+  #     - name: Merge results
+  #       shell: powershell
+  #       run: |
+  #         $sprtArgs = @()
+  #         if ("${{ inputs.sprt }}" -eq "true") {
+  #           $sprtArgs += "--sprt"
+  #           $sprtArgs += "--sprt-elo0"
+  #           $sprtArgs += "${{ inputs.sprt_elo0 }}"
+  #           $sprtArgs += "--sprt-elo1"
+  #           $sprtArgs += "${{ inputs.sprt_elo1 }}"
+  #           $sprtArgs += "--sprt-alpha"
+  #           $sprtArgs += "${{ inputs.sprt_alpha }}"
+  #           $sprtArgs += "--sprt-beta"
+  #           $sprtArgs += "${{ inputs.sprt_beta }}"
+  #         }
 
-          & "$env:PYTHON_EXE" testing/merge_ab.py `
-            --input-dir all-results `
-            --out-dir merged `
-            --expected-batches ${{ inputs.num_batches }} `
-            @sprtArgs
+  #         & "$env:PYTHON_EXE" testing/merge_ab.py `
+  #           --input-dir all-results `
+  #           --out-dir merged `
+  #           --expected-batches ${{ inputs.num_batches }} `
+  #           @sprtArgs
 
-      - name: Write GitHub step summary
-        shell: powershell
-        run: |
-          if (Test-Path merged/summary.md) {
-            Get-Content merged/summary.md | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          } else {
-            "summary.md not found" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          }
+  #     - name: Write GitHub step summary
+  #       shell: powershell
+  #       run: |
+  #         if (Test-Path merged/summary.md) {
+  #           Get-Content merged/summary.md | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+  #         } else {
+  #           "summary.md not found" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+  #         }
 
-      - name: Upload merged result
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ab-test-merged-result
-          path: merged/
+  #     - name: Upload merged result
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: ab-test-merged-result
+  #         path: merged/
