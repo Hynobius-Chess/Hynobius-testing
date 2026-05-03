@@ -50,7 +50,7 @@ jobs:
           path: baseline
   
       - name: Check Cute Chess CLI
-        shell: pwsh
+        shell: powershell
         run: |
           $cutechess = Get-Command cutechess-cli.exe -ErrorAction SilentlyContinue
 
@@ -62,7 +62,7 @@ jobs:
           cutechess-cli.exe --version
 
       - name: Resolve SHAs
-        shell: pwsh
+        shell: powershell
         run: |
           $baselineSha = git -C baseline rev-parse HEAD
           $candidateSha = git -C candidate rev-parse HEAD
@@ -71,19 +71,19 @@ jobs:
           "CANDIDATE_SHA=$candidateSha" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build candidate
-        shell: pwsh
+        shell: powershell
         run: |
           cmake -S candidate -B candidate/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
           cmake --build candidate/build --config Release
 
       - name: Build baseline
-        shell: pwsh
+        shell: powershell
         run: |
           cmake -S baseline -B baseline/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
           cmake --build baseline/build --config Release
 
       - name: Resolve executable paths
-        shell: pwsh
+        shell: powershell
         run: |
           $baselineCandidates = @(
             "baseline/build/Release/chess-analysis-engine.exe",
@@ -121,7 +121,7 @@ jobs:
           "CANDIDATE_EXE=$candidateExe" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run AB batch
-        shell: pwsh
+        shell: powershell
         run: |
           python testing/run_ab.py `
             --cutechess "cutechess-cli" `
