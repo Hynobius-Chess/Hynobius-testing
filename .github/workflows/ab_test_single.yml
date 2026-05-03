@@ -61,6 +61,26 @@ jobs:
           Write-Host "Found cutechess-cli at: $($cutechess.Source)"
           cutechess-cli.exe --version
 
+      - name: Prepare portable Python
+        shell: powershell
+        run: |
+          $version = "3.12.10"
+          $pythonDir = "$env:RUNNER_TEMP\python-$version"
+          $pythonExe = "$pythonDir\python.exe"
+
+          if (!(Test-Path $pythonExe)) {
+            $zip = "$env:RUNNER_TEMP\python-$version-embed-amd64.zip"
+            $url = "https://www.python.org/ftp/python/$version/python-$version-embed-amd64.zip"
+
+            Invoke-WebRequest -Uri $url -OutFile $zip
+
+            New-Item -ItemType Directory -Force $pythonDir | Out-Null
+            Expand-Archive -Path $zip -DestinationPath $pythonDir -Force
+          }
+
+          & $pythonExe --version
+          "PYTHON_EXE=$pythonExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Resolve SHAs
         shell: powershell
         run: |
@@ -123,7 +143,7 @@ jobs:
       - name: Run AB batch
         shell: powershell
         run: |
-          python testing/run_ab.py `
+            & "$env:PYTHON_EXE" testing/run_ab.py `
             --cutechess "cutechess-cli" `
             --baseline $env:BASELINE_EXE `
             --candidate $env:CANDIDATE_EXE `
