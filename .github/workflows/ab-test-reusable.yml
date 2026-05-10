@@ -200,7 +200,7 @@ jobs:
           $openingFile = "${{ inputs.opening_file }}"
 
           if ($mode -eq "depth") {
-            $eachArgs = @("proto=uci", "depth=${{ inputs.depth }}")
+            $eachArgs = @("proto=uci", "tc=inf", "depth=${{ inputs.depth }}")
           }
           elseif ($mode -eq "tc") {
             $eachArgs = @("proto=uci", "tc=${{ inputs.tc }}")
