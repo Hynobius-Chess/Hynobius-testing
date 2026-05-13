@@ -4,28 +4,94 @@ import math
 import shutil
 import subprocess
 import time
+import re
 from pathlib import Path
 from datetime import datetime
+
+# ============================================================
+# Output helpers
+# ============================================================
+
+def print_status_line(text: str) -> None:
+    print("\r" + text[:200].ljust(200), end="", flush=True)
 
 # ============================================================
 # Command helpers
 # ============================================================
 
-def run_cmd(cmd: list[str], *, capture: bool = False) -> str:
-    print("+", " ".join(cmd), flush=True)
+def run_cmd(
+    cmd: list[str],
+    *,
+    capture: bool = False,
+    check: bool = True,
+    verbose: bool = True,
+) -> str:
+    if (verbose):
+        print("+ " + " ".join(cmd), flush=True)
+
+    completed = subprocess.run(
+        cmd,
+        text=True,
+        stdout=subprocess.PIPE if capture else None,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    if check and completed.returncode != 0:
+        print("", flush=True)
+        print("ERROR: command failed", flush=True)
+        print("Command:", flush=True)
+        print("  " + " ".join(cmd), flush=True)
+        print(f"Exit code: {completed.returncode}", flush=True)
+
+        if completed.stdout:
+            print("", flush=True)
+            print("stdout:", flush=True)
+            print(completed.stdout.rstrip(), flush=True)
+
+        if completed.stderr:
+            print("", flush=True)
+            print("stderr:", flush=True)
+            print(completed.stderr.rstrip(), flush=True)
+
+        raise subprocess.CalledProcessError(
+            completed.returncode,
+            cmd,
+            output=completed.stdout,
+            stderr=completed.stderr,
+        )
 
     if capture:
-        completed = subprocess.run(
-            cmd,
-            check=True,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
         return completed.stdout.strip()
 
-    subprocess.run(cmd, check=True)
     return ""
+
+def run_cmd_retry(
+    cmd: list[str],
+    *,
+    capture: bool = False,
+    retries: int = 5,
+    delay_seconds: int = 5,
+    verbose: bool = True,
+) -> str:
+    last_error: subprocess.CalledProcessError | None = None
+
+    for attempt in range(1, retries + 1):
+        try:
+            return run_cmd(cmd, capture=capture, verbose=verbose)
+        except subprocess.CalledProcessError as e:
+            last_error = e
+
+            print(
+                f"[warn] command failed, retry {attempt}/{retries}",
+                flush=True,
+            )
+
+            if attempt < retries:
+                time.sleep(delay_seconds)
+
+    assert last_error is not None
+    raise last_error
 
 
 # ============================================================
@@ -93,7 +159,7 @@ def get_latest_run_id(workflow: str) -> str:
 
 
 def get_run_progress(run_id: str, games_per_batch: int) -> dict:
-    output = run_cmd(
+    output = run_cmd_retry(
         [
             "gh",
             "run",
@@ -103,6 +169,9 @@ def get_run_progress(run_id: str, games_per_batch: int) -> dict:
             "jobs",
         ],
         capture=True,
+        retries=10,
+        delay_seconds=5,
+        verbose=False,
     )
 
     data = json.loads(output)
@@ -150,10 +219,23 @@ def get_run_progress(run_id: str, games_per_batch: int) -> dict:
         "total_games_est": total_games_est,
     }
 
-
 def wait_for_run(run_id: str, poll_seconds: int, games_per_batch: int) -> str:
+    last_progress = {
+        "total_batches": -1,
+        "completed_batches": -1,
+        "failed_batches": -1,
+        "in_progress_batches": -1,
+        "queued_batches": -1,
+        "completed_games_est": -1,
+        "total_games_est": -1,
+    }
+
+    check_times = 0
+
     while True:
-        status = run_cmd(
+        check_times += 1
+
+        status = run_cmd_retry(
             [
                 "gh",
                 "run",
@@ -165,18 +247,30 @@ def wait_for_run(run_id: str, poll_seconds: int, games_per_batch: int) -> str:
                 '.status + " " + (.conclusion // "")',
             ],
             capture=True,
+            retries=10,
+            delay_seconds=5,
+            verbose=False,
         )
 
-        progress = get_run_progress(run_id, games_per_batch)
+        try:
+            progress = get_run_progress(run_id, games_per_batch)
+            last_progress = progress
+        except subprocess.CalledProcessError:
+            progress = last_progress
 
-        print(
+            print(
+                "[warn] failed to query job progress; using last known progress",
+                flush=True,
+            )
+
+        print_status_line(
             f"run {run_id}: {status} | "
+            f"checked: {check_times} times | "
             f"batches: {progress['completed_batches']}/{progress['total_batches']} done, "
             f"{progress['in_progress_batches']} running, "
             f"{progress['queued_batches']} queued, "
             f"{progress['failed_batches']} failed | "
             f"games est: {progress['completed_games_est']}/{progress['total_games_est']}",
-            flush=True,
         )
 
         if status.startswith("completed"):
@@ -214,6 +308,35 @@ def download_batch_artifacts(run_id: str, out_dir: Path) -> None:
         ]
     )
 
+# ============================================================
+# Work folder helper
+# ============================================================
+
+def safe_name(s: str) -> str:
+    s = s.replace("/", "-")
+    s = s.replace("\\", "-")
+    s = re.sub(r"[^A-Za-z0-9._-]+", "-", s)
+    s = re.sub(r"-+", "-", s)
+    return s.strip("-")
+
+
+def make_test_folder_name(args) -> str:
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    baseline = safe_name(args.baseline_ref)
+    candidate = safe_name(args.candidate_ref)
+    return f"{timestamp}-{candidate}-vs-{baseline}"
+
+
+def create_test_dir(work_dir: Path, args) -> Path:
+    test_dir = work_dir / make_test_folder_name(args)
+
+    suffix = 1
+    while test_dir.exists():
+        test_dir = work_dir / f"{make_test_folder_name(args)}-{suffix}"
+        suffix += 1
+
+    test_dir.mkdir(parents=True)
+    return test_dir
 
 # ============================================================
 # Chess AB statistics
@@ -598,27 +721,26 @@ def main() -> None:
     parser.add_argument("--work-dir", default="sprt_runs")
 
     # By default, clean previous controller data so old artifacts cannot poison the test.
-    parser.add_argument(
-        "--resume",
-        action="store_true",
-        help="Keep existing work-dir/all_results and continue from it.",
-    )
+    # parser.add_argument(
+    #     "--resume",
+    #     action="store_true",
+    #     help="Keep existing work-dir/all_results and continue from it.",
+    # )
 
     args = parser.parse_args()
 
     work_dir = Path(args.work_dir)
-    all_results_dir = work_dir / "all_results"
-    merged_dir = work_dir / "merged_accumulated"
-
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    if not args.resume:
-        if all_results_dir.exists():
-            shutil.rmtree(all_results_dir)
-        if merged_dir.exists():
-            shutil.rmtree(merged_dir)
+    test_dir = create_test_dir(work_dir, args)
+
+    all_results_dir = test_dir / "all_results"
+    merged_dir = test_dir / "merged_accumulated"
 
     all_results_dir.mkdir(parents=True, exist_ok=True)
+    merged_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"Created test folder: {test_dir}", flush=True)
 
     current_batch = args.start_batch
     end_batch = args.start_batch + args.max_batches
