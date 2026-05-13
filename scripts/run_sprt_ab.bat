@@ -1,10 +1,10 @@
 @echo off
 
 set BASELINE=dev
-set CANDIDATE=bugfix/tt
+set CANDIDATE=bugfix/mate-in-two
 set START_BATCH=0
 set BATCH_COUNT=5
-set PAIRS_PER_BATCH=5
+set PAIRS_PER_BATCH=10
 set MAX_BATCH_COUNT=100
 set TC="10+0.1"
 
