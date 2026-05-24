@@ -1,4 +1,4 @@
-name: Perft
+name: Very Hard Test
 
 on:
   workflow_call:

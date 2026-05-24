@@ -1,4 +1,4 @@
-name: Perft
+name: Basic Test
 
 on:
   workflow_call:
