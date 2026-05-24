@@ -37,9 +37,10 @@ jobs:
           cmake --build engine/build --config Release
 
       - name: Run tests
+        working-directory: testing
         shell: bash
         run: |
-          python testing/tools/test_controler.py \
-            --engine testing/Hynobius.exe \
-            --tests testing/tests/perft.txt \
+          python tools/test_controler.py \
+            --engine Hynobius.exe \
+            --tests tests/perft.txt \
             --pass-rate 100 \
