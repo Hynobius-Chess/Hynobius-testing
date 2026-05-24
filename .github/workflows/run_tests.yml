@@ -19,19 +19,29 @@ on:
 jobs:
   perft:
     uses: ./.github/workflows/perft_test.yml
+    with:
+      engine_ref: ${{ inputs.engine_ref }}
   
   mate:
     needs: perft
     uses: ./.github/workflows/mate_test.yml
+    with:
+      engine_ref: ${{ inputs.engine_ref }}
 
   basic-test:
     needs: perft
     uses: ./.github/workflows/basic_test.yml
+    with:
+      engine_ref: ${{ inputs.engine_ref }}
 
   hard-test:
     needs: perft
     uses: ./.github/workflows/hard_test.yml
+    with:
+      engine_ref: ${{ inputs.engine_ref }}
 
   very-hard-test:
     needs: perft
     uses: ./.github/workflows/very_hard_test.yml
+    with:
+      engine_ref: ${{ inputs.engine_ref }}
