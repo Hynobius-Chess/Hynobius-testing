@@ -44,6 +44,7 @@ jobs:
           chmod +x testing/bin/Hynobius
 
       - name: Run M2
+        working-directory: testing
         shell: bash
         run: |
           python tools/test_controler.py \
@@ -53,6 +54,7 @@ jobs:
             --pass-rate 100 \
 
       - name: Run M3
+        working-directory: testing
         shell: bash
         run: |
           python tools/test_controler.py \
@@ -62,6 +64,7 @@ jobs:
             --pass-rate 100 \
 
       - name: Run M4
+        working-directory: testing
         shell: bash
         run: |
           python tools/test_controler.py \
@@ -71,6 +74,7 @@ jobs:
             --pass-rate 90 \
 
       - name: Run M5
+        working-directory: testing
         shell: bash
         run: |
           python tools/test_controler.py \
