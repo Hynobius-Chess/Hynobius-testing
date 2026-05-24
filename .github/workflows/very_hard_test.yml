@@ -1,0 +1,46 @@
+name: Perft
+
+on:
+  workflow_call:
+    inputs:
+      engine_ref:
+        type: string
+        description: "Engine branch, tag, or commit"
+        required: false
+        default: "main"
+
+jobs:
+  test-engine:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout testing repo
+        uses: actions/checkout@v4
+        with:
+          path: testing
+
+      - name: Checkout engine repo
+        uses: actions/checkout@v4
+        with:
+          repository: Hynobius-Chess/Hynobius
+          ref: ${{ inputs.engine_ref }}
+          path: engine
+
+      - name: Configure engine
+        shell: pwsh
+        run: |
+          cmake -S engine -B engine/build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build engine
+        shell: pwsh
+        run: |
+          cmake --build engine/build --config Release
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          python tools/test_controler.py \
+            --engine Hynobius.exe \
+            --tests \
+                tests/very_hard_tests/very_hard_very_long_40.txt \
+            --pass-rate 80 \

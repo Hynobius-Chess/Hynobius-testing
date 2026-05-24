@@ -1,0 +1,37 @@
+name: Perft
+
+on:
+  workflow_call:
+    inputs:
+      engine_ref:
+        type: string
+        description: "Engine branch, tag, or commit"
+        required: false
+        default: "main"
+  workflow_dispatch:
+    inputs:
+      engine_ref:
+        type: string
+        description: "Engine branch, tag, or commit"
+        required: false
+        default: "main"
+
+jobs:
+  perft:
+    uses: ./.github/workflows/perft_test.yml
+  
+  mate:
+    needs: perft
+    uses: ./.github/workflows/mate_test.yml
+
+  basic-test:
+    needs: perft
+    uses: ./.github/workflows/basic_test.yml
+
+  hard-test:
+    needs: perft
+    uses: ./.github/workflows/hard_test.yml
+
+  very-hard-test:
+    needs: perft
+    uses: ./.github/workflows/very_hard_test.yml

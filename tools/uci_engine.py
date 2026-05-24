@@ -153,7 +153,7 @@ class UciEngine:
                 result.pv = parts[i + 1:]
                 break
 
-    def go_perft(self, fen: str, depth: int) -> PerftResult:
+    def go_perft(self, depth: int) -> PerftResult:
         self.send(f"go perft {depth}")
         return self._read_perft_result()
 

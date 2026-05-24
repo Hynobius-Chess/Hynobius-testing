@@ -107,10 +107,10 @@ def compare_search(case: TestCase, actual: SearchResult) -> list[str]:
 # ============================================================
 
 def run_perft_case(engine: UciEngine, case: TestCase) -> list[str]:
-    actual = engine.go_perft(
-        fen=case.fen,
-        depth=case.depth,
-    )
+    engine.new_game()
+    engine.set_position(case.fen, case.premove)
+    
+    actual = engine.go_perft(case.depth)
 
     return compare_perft(case, actual)
 

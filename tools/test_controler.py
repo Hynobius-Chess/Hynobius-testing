@@ -87,7 +87,7 @@ def run_job(
     command = [
         python_exe,
         "-m",
-        "correctness_tests.test_runner",
+        "tools.test_runner",
         "--engine",
         str(engine_path),
         "--test",
