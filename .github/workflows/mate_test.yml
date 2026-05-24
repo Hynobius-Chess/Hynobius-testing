@@ -27,47 +27,54 @@ jobs:
           path: engine
 
       - name: Configure engine
-        shell: pwsh
+        shell: bash
         run: |
           cmake -S engine -B engine/build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build engine
-        shell: pwsh
+        shell: bash
         run: |
           cmake --build engine/build --config Release
 
+      - name: Copy engine executable
+        shell: bash
+        run: |
+          mkdir -p testing/bin
+          cp engine/build/Hynobius testing/bin/Hynobius
+          chmod +x testing/bin/Hynobius
+
       - name: Run M2
-        shell: pwsh
+        shell: bash
         run: |
           python tools/test_controler.py \
-            --engine Hynobius.exe \
+            --engine bin/Hynobius \
             --tests \
                 tests/mate/mate_in_two_1000.txt \
             --pass-rate 100 \
 
       - name: Run M3
-        shell: pwsh
+        shell: bash
         run: |
           python tools/test_controler.py \
-            --engine Hynobius.exe \
+              --engine bin/Hynobius \
             --tests \
                 tests/mate/mate_in_three_1000.txt \
             --pass-rate 100 \
 
       - name: Run M4
-        shell: pwsh
+        shell: bash
         run: |
           python tools/test_controler.py \
-            --engine Hynobius.exe \
+            --engine bin/Hynobius \
             --tests \
                 tests/mate/mate_in_four_200.txt \
             --pass-rate 90 \
 
       - name: Run M5
-        shell: pwsh
+        shell: bash
         run: |
           python tools/test_controler.py \
-            --engine Hynobius.exe \
+            --engine bin/Hynobius \
             --tests \
                 tests/mate/mate_in_five_40.txt \
             --pass-rate 80 \
