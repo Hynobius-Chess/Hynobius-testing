@@ -50,5 +50,5 @@ jobs:
           python tools/test_controler.py \
             --engine bin/Hynobius \
             --tests tests/perft.txt \
-            --pass-rate 100
+            --pass-rate 100 \
             --show-output
