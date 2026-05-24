@@ -36,11 +36,18 @@ jobs:
         run: |
           cmake --build engine/build --config Release
 
+      - name: Copy engine executable
+        shell: bash
+        run: |
+          mkdir -p testing/bin
+          cp engine/build/Hynobius testing/bin/Hynobius
+          chmod +x testing/bin/Hynobius
+
       - name: Run tests
         working-directory: testing
         shell: bash
         run: |
           python tools/test_controler.py \
-            --engine build/Hynobius.exe \
+            --engine bin/Hynobius.exe \
             --tests tests/perft.txt \
             --pass-rate 100 \
