@@ -27,19 +27,19 @@ jobs:
           path: engine
 
       - name: Configure engine
-        shell: pwsh
+        shell: bash
         run: |
           cmake -S engine -B engine/build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build engine
-        shell: pwsh
+        shell: bash
         run: |
           cmake --build engine/build --config Release
 
       - name: Run tests
-        shell: pwsh
+        shell: bash
         run: |
-          python tools/test_controler.py \
-            --engine Hynobius.exe \
-            --tests tests/perft.txt \
+          python testing/tools/test_controler.py \
+            --engine testing/Hynobius.exe \
+            --tests testing/tests/perft.txt \
             --pass-rate 100 \
