@@ -48,6 +48,6 @@ jobs:
         shell: bash
         run: |
           python tools/test_controler.py \
-            --engine bin/Hynobius.exe \
+            --engine bin/Hynobius \
             --tests tests/perft.txt \
-            --pass-rate 100 \
+            --pass-rate 100
