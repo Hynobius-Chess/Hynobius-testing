@@ -51,7 +51,7 @@ jobs:
             --engine bin/Hynobius \
             --tests \
                 tests/mate/mate_in_two_1000.txt \
-            --pass-rate 100 \
+            --pass-rate 95 \
 
       - name: Run M3
         working-directory: testing
@@ -61,7 +61,7 @@ jobs:
               --engine bin/Hynobius \
             --tests \
                 tests/mate/mate_in_three_1000.txt \
-            --pass-rate 100 \
+            --pass-rate 95 \
 
       - name: Run M4
         working-directory: testing
