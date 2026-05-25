@@ -23,6 +23,7 @@ jobs:
       engine_ref: ${{ inputs.engine_ref }}
 
   sanitizers:
+    needs: perft
     uses: ./.github/workflows/sanitizers.yml
     with:
       engine_ref: ${{ inputs.engine_ref }}

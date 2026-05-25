@@ -44,11 +44,11 @@ jobs:
           repository: Hynobius-Chess/Hynobius
           ref: ${{ inputs.engine_ref }}
           path: engine
-
+          
       - name: Configure engine
         shell: bash
         run: |
-          cmake -S . -B build -G Ninja \
+          cmake -S . -B engine/build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_CXX_COMPILER="${{ matrix.compiler }}" \
             -DCMAKE_CXX_FLAGS="${{ matrix.cxxflags }}" \
