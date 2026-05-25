@@ -36,6 +36,7 @@ jobs:
       - name: Checkout testing repo
         uses: actions/checkout@v4
         with:
+          repository: Hynobius-Chess/Hynobius-testing
           path: testing
 
       - name: Checkout engine repo
