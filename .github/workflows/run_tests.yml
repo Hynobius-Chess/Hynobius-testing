@@ -21,27 +21,32 @@ jobs:
     uses: ./.github/workflows/perft_test.yml
     with:
       engine_ref: ${{ inputs.engine_ref }}
+
+  sanitizers:
+    uses: ./.github/workflows/sanitizers.yml
+    with:
+      engine_ref: ${{ inputs.engine_ref }}
   
   mate:
-    needs: perft
+    needs: sanitizers
     uses: ./.github/workflows/mate_test.yml
     with:
       engine_ref: ${{ inputs.engine_ref }}
 
   basic-test:
-    needs: perft
+    needs: sanitizers
     uses: ./.github/workflows/basic_test.yml
     with:
       engine_ref: ${{ inputs.engine_ref }}
 
   hard-test:
-    needs: perft
+    needs: sanitizers
     uses: ./.github/workflows/hard_test.yml
     with:
       engine_ref: ${{ inputs.engine_ref }}
 
   very-hard-test:
-    needs: perft
+    needs: sanitizers
     uses: ./.github/workflows/very_hard_test.yml
     with:
       engine_ref: ${{ inputs.engine_ref }}

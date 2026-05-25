@@ -1,0 +1,81 @@
+name: Sanitizers
+
+on:
+  workflow_call:
+    inputs:
+      engine_ref:
+        type: string
+        description: "Engine branch, tag, or commit"
+        required: false
+        default: "main"
+
+jobs:
+  sanitizers:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ASan + UBSan
+            compiler: clang++
+            cxxflags: "-fsanitize=address,undefined -fno-omit-frame-pointer -g"
+            ldflags: "-fsanitize=address,undefined"
+          - name: TSan
+            compiler: clang++
+            cxxflags: "-fsanitize=thread -fno-omit-frame-pointer -g"
+            ldflags: "-fsanitize=thread"
+
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build
+
+      - name: Checkout testing repo
+        uses: actions/checkout@v4
+        with:
+          path: testing
+
+      - name: Checkout engine repo
+        uses: actions/checkout@v4
+        with:
+          repository: Hynobius-Chess/Hynobius
+          ref: ${{ inputs.engine_ref }}
+          path: engine
+
+      - name: Configure engine
+        shell: bash
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER="${{ matrix.compiler }}" \
+            -DCMAKE_CXX_FLAGS="${{ matrix.cxxflags }}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${{ matrix.ldflags }}"
+
+      - name: Build engine
+        shell: bash
+        run: |
+          cmake --build engine/build
+
+      - name: Copy engine executable
+        shell: bash
+        run: |
+          mkdir -p testing/bin
+          cp engine/build/Hynobius testing/bin/Hynobius
+          chmod +x testing/bin/Hynobius
+
+      - name: Run tests
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+          TSAN_OPTIONS: halt_on_error=1
+        working-directory: testing
+        shell: bash
+        run: |
+          python tools/test_controler.py \
+            --engine bin/Hynobius \
+            --tests tests/sanitizer.txt \
+            --pass-rate 0 \
+            --show-output
