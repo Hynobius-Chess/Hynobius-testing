@@ -1,4 +1,4 @@
-type: bestmove
+# type: bestmove
 
 name='MfJk0' fen='8/4k3/8/pB2PPKp/P7/7r/8/8 b - - 0 49' depth=7 premove=h3h1 bestmove=f5f6
 name='Uz64R' fen='q4rk1/p4ppp/3b1n2/6B1/2Pp2b1/P2P2P1/5P1P/RN1QR1K1 w - - 4 17' depth=7 premove=d1d2 bestmove=a8f3
