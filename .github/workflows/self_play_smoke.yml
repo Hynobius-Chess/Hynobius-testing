@@ -6,6 +6,7 @@ on:
       baseline_ref:
         description: "Baseline git ref (tag / branch / commit)"
         required: false
+        default: "main"
         type: string
 
       candidate_ref:
@@ -25,6 +26,7 @@ on:
       baseline_ref:
         description: "Baseline git ref (tag / branch / commit)"
         required: false
+        default: "main"
         type: string
 
       candidate_ref:
@@ -67,30 +69,76 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cutechess
 
-          which cutechess-cli
-          cutechess-cli -version || true
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            git \
+            qt6-base-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            libqt6svg6-dev
+
+      - name: Build Cute Chess
+        shell: bash
+        run: |
+          git clone --depth 1 --branch v1.3.1 \
+            https://github.com/cutechess/cutechess.git \
+            "$RUNNER_TEMP/cutechess-src"
+
+          cmake -S "$RUNNER_TEMP/cutechess-src" \
+                -B "$RUNNER_TEMP/cutechess-build" \
+                -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_TESTING=OFF
+
+          cmake --build "$RUNNER_TEMP/cutechess-build" --target cutechess-cli
+
+          cutechess_cli="$(find "$RUNNER_TEMP/cutechess-build" -type f -name cutechess-cli | head -n 1)"
+
+          if [ -z "$cutechess_cli" ]; then
+            echo "cutechess-cli not found"
+            find "$RUNNER_TEMP/cutechess-build" -type f
+            exit 1
+          fi
+
+          chmod +x "$cutechess_cli"
+
+          echo "CUTECHESS_CLI=$cutechess_cli" >> "$GITHUB_ENV"
+
+          "$cutechess_cli" -version || true
 
       - name: Resolve SHAs
         shell: bash
         run: |
-          baseline_sha=$(git -C baseline rev-parse HEAD)
-          candidate_sha=$(git -C candidate rev-parse HEAD)
+          baseline_sha="$(git -C baseline rev-parse HEAD)"
+          candidate_sha="$(git -C candidate rev-parse HEAD)"
 
           echo "BASELINE_SHA=$baseline_sha" >> "$GITHUB_ENV"
           echo "CANDIDATE_SHA=$candidate_sha" >> "$GITHUB_ENV"
 
+          echo "Baseline SHA:  $baseline_sha"
+          echo "Candidate SHA: $candidate_sha"
+
       - name: Build candidate
         shell: bash
         run: |
-          cmake -S candidate -B candidate/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S candidate \
+                -B candidate/build \
+                -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release
+
           cmake --build candidate/build --config Release
 
       - name: Build baseline
         shell: bash
         run: |
-          cmake -S baseline -B baseline/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S baseline \
+                -B baseline/build \
+                -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release
+
           cmake --build baseline/build --config Release
 
       - name: Prepare output folders
@@ -121,6 +169,7 @@ jobs:
           )
 
           baseline_exe=""
+
           for p in "${baseline_candidates[@]}"; do
             if [ -f "$p" ] && [ -x "$p" ]; then
               baseline_exe="$(realpath "$p")"
@@ -129,12 +178,14 @@ jobs:
           done
 
           if [ -z "$baseline_exe" ]; then
-            echo "Baseline exe not found"
-            find baseline/build -type f -maxdepth 4
+            echo "Baseline executable not found"
+            echo "Files under baseline/build:"
+            find baseline/build -maxdepth 5 -type f
             exit 1
           fi
 
           candidate_exe=""
+
           for p in "${candidate_candidates[@]}"; do
             if [ -f "$p" ] && [ -x "$p" ]; then
               candidate_exe="$(realpath "$p")"
@@ -143,16 +194,17 @@ jobs:
           done
 
           if [ -z "$candidate_exe" ]; then
-            echo "Candidate exe not found"
-            find candidate/build -type f -maxdepth 4
+            echo "Candidate executable not found"
+            echo "Files under candidate/build:"
+            find candidate/build -maxdepth 5 -type f
             exit 1
           fi
 
           echo "BASELINE_EXE=$baseline_exe" >> "$GITHUB_ENV"
           echo "CANDIDATE_EXE=$candidate_exe" >> "$GITHUB_ENV"
 
-          echo "Baseline:  $baseline_exe"
-          echo "Candidate: $candidate_exe"
+          echo "Baseline executable:  $baseline_exe"
+          echo "Candidate executable: $candidate_exe"
 
       - name: Validate inputs
         shell: bash
@@ -172,7 +224,8 @@ jobs:
       - name: Run paired-opening match
         shell: bash
         run: |
-          timestamp=$(date -u +"%Y-%m-%d_%H-%M-%S")
+          timestamp="$(date -u +"%Y-%m-%d_%H-%M-%S")"
+
           artifact_name="ab-test-${{ github.run_id }}-$timestamp"
           pgn="out/pgn/ab_match_$timestamp.pgn"
           txt="out/results/ab_match_$timestamp.txt"
@@ -185,7 +238,7 @@ jobs:
             exit 1
           fi
 
-          cutechess-cli \
+          "$CUTECHESS_CLI" \
             -engine name=baseline cmd="$BASELINE_EXE" \
             -engine name=candidate cmd="$CANDIDATE_EXE" \
             -each proto=uci tc=10+0.1 \
