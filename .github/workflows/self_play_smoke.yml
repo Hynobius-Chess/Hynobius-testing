@@ -1,0 +1,171 @@
+name: AB Test Reusable
+
+on:
+  workflow_call:
+    inputs:
+      baseline_ref:
+        description: "Baseline git ref (tag / branch / commit)"
+        required: false
+        type: string
+
+      candidate_ref:
+        description: "Candidate git ref (tag / branch / commit), empty = caller SHA"
+        required: false
+        default: ""
+        type: string
+
+      opening_pairs:
+        description: "Number of paired openings"
+        required: false
+        default: "10"
+        type: string
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: "Baseline git ref (tag / branch / commit)"
+        required: false
+        type: string
+
+      candidate_ref:
+        description: "Candidate git ref (tag / branch / commit), empty = caller SHA"
+        required: false
+        default: ""
+        type: string
+        
+      opening_pairs:
+        description: "Number of paired openings"
+        required: false
+        default: "10"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ab-match:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+        with:
+          repository: Hynobius-Chess/Hynobius
+          fetch-depth: 0
+          ref: ${{ inputs.candidate_ref != '' && inputs.candidate_ref || github.sha }}
+          path: candidate
+
+      - name: Checkout baseline
+        uses: actions/checkout@v4
+        with:
+          repository: Hynobius-Chess/Hynobius
+          fetch-depth: 0
+          ref: ${{ inputs.baseline_ref }}
+          path: baseline
+
+      - name: Resolve SHAs
+        shell: pwsh
+        run: |
+          $baselineSha = git -C baseline rev-parse HEAD
+          $candidateSha = git -C candidate rev-parse HEAD
+
+          "BASELINE_SHA=$baselineSha" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CANDIDATE_SHA=$candidateSha" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build candidate
+        shell: pwsh
+        run: |
+          cmake -S candidate -B candidate/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake --build candidate/build --config Release
+
+      - name: Build baseline
+        shell: pwsh
+        run: |
+          cmake -S baseline -B baseline/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake --build baseline/build --config Release
+
+      - name: Prepare output folders
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          New-Item -ItemType Directory -Force -Path out/pgn | Out-Null
+          New-Item -ItemType Directory -Force -Path out/results | Out-Null
+
+      - name: Resolve executable paths
+        shell: pwsh
+        run: |
+          $baselineCandidates = @(
+            "baseline/build/Release/chess-analysis-engine.exe",
+            "baseline/build/chess-analysis-engine.exe",
+            "baseline/build/Release/Hynobius.exe",
+            "baseline/build/Hynobius.exe"
+          )
+
+          $candidateCandidates = @(
+            "candidate/build/Release/chess-analysis-engine.exe",
+            "candidate/build/chess-analysis-engine.exe",
+            "candidate/build/Release/Hynobius.exe",
+            "candidate/build/Hynobius.exe"
+          )
+
+          $baselineExe = $null
+          foreach ($p in $baselineCandidates) {
+            if (Test-Path $p) {
+              $baselineExe = (Resolve-Path $p).Path
+              break
+            }
+          }
+          if (-not $baselineExe) { throw "Baseline exe not found" }
+
+          $candidateExe = $null
+          foreach ($p in $candidateCandidates) {
+            if (Test-Path $p) {
+              $candidateExe = (Resolve-Path $p).Path
+              break
+            }
+          }
+          if (-not $candidateExe) { throw "Candidate exe not found" }
+
+          "BASELINE_EXE=$baselineExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CANDIDATE_EXE=$candidateExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Validate inputs
+        shell: pwsh
+        run: |
+          $pairs = [int]"${{ inputs.opening_pairs }}"
+          if ($pairs -le 0) {
+            throw "opening_pairs must be > 0"
+          }
+
+      - name: Run paired-opening match
+        shell: pwsh
+        run: |
+          $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+          $artifactName = "ab-test-${{ github.run_id }}-$timestamp"
+          $pgn = "out/pgn/ab_match_$timestamp.pgn"
+          $txt = "out/results/ab_match_$timestamp.txt"
+
+          $mode = "tc"
+          $pairs = [int]"${{ inputs.opening_pairs }}"
+          $openingFile = "candidate/bench/openings.pgn"
+
+          $eachArgs = @("proto=uci", "tc=10+0.1")
+
+          $argList = @(
+            "-engine", "name=baseline", "cmd=$env:BASELINE_EXE",
+            "-engine", "name=candidate", "cmd=$env:CANDIDATE_EXE",
+            "-each"
+          ) + $eachArgs + @(
+            "-openings", "file=$openingFile", "format=pgn", "order=random",
+            "-rounds", "$pairs",
+            "-repeat",
+            "-recover",
+            "-resign", "movecount=3", "score=800",
+            "-draw", "movenumber=40", "movecount=8", "score=10",
+            "-pgnout", $pgn
+          )
+
+          & "D:\Cute_Chess\cutechess-cli.exe" @argList | Tee-Object -FilePath $txt
+
+          "PGN_FILE=$pgn" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "RESULT_FILE=$txt" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Append

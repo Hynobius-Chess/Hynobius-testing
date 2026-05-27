@@ -51,3 +51,11 @@ jobs:
     uses: ./.github/workflows/very_hard_test.yml
     with:
       engine_ref: ${{ inputs.engine_ref }}
+
+  self-play-smoke:
+    needs: sanitizers
+    uses: ./.github/workflows/self_play_smoke.yml
+    with:
+      baseline_ref: ${{ inputs.engine_ref }}
+      candidate_ref:  ${{ inputs.engine_ref }}
+      opening_pairs: 20
