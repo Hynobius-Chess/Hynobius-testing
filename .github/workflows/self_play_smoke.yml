@@ -19,6 +19,7 @@ on:
         required: false
         default: "10"
         type: string
+
   workflow_dispatch:
     inputs:
       baseline_ref:
@@ -31,7 +32,7 @@ on:
         required: false
         default: ""
         type: string
-        
+
       opening_pairs:
         description: "Number of paired openings"
         required: false
@@ -43,7 +44,7 @@ permissions:
 
 jobs:
   ab-match:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout candidate
@@ -62,110 +63,149 @@ jobs:
           ref: ${{ inputs.baseline_ref }}
           path: baseline
 
-      - name: Resolve SHAs
-        shell: pwsh
+      - name: Install dependencies
+        shell: bash
         run: |
-          $baselineSha = git -C baseline rev-parse HEAD
-          $candidateSha = git -C candidate rev-parse HEAD
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cutechess
 
-          "BASELINE_SHA=$baselineSha" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "CANDIDATE_SHA=$candidateSha" | Out-File -FilePath $env:GITHUB_ENV -Append
+          which cutechess-cli
+          cutechess-cli -version || true
+
+      - name: Resolve SHAs
+        shell: bash
+        run: |
+          baseline_sha=$(git -C baseline rev-parse HEAD)
+          candidate_sha=$(git -C candidate rev-parse HEAD)
+
+          echo "BASELINE_SHA=$baseline_sha" >> "$GITHUB_ENV"
+          echo "CANDIDATE_SHA=$candidate_sha" >> "$GITHUB_ENV"
 
       - name: Build candidate
-        shell: pwsh
+        shell: bash
         run: |
-          cmake -S candidate -B candidate/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake -S candidate -B candidate/build -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build candidate/build --config Release
 
       - name: Build baseline
-        shell: pwsh
+        shell: bash
         run: |
-          cmake -S baseline -B baseline/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          cmake -S baseline -B baseline/build -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build baseline/build --config Release
 
       - name: Prepare output folders
-        shell: pwsh
+        shell: bash
         run: |
-          New-Item -ItemType Directory -Force -Path out | Out-Null
-          New-Item -ItemType Directory -Force -Path out/pgn | Out-Null
-          New-Item -ItemType Directory -Force -Path out/results | Out-Null
+          mkdir -p out/pgn
+          mkdir -p out/results
 
       - name: Resolve executable paths
-        shell: pwsh
+        shell: bash
         run: |
-          $baselineCandidates = @(
-            "baseline/build/Release/chess-analysis-engine.exe",
-            "baseline/build/chess-analysis-engine.exe",
-            "baseline/build/Release/Hynobius.exe",
-            "baseline/build/Hynobius.exe"
+          baseline_candidates=(
+            "baseline/build/chess-analysis-engine"
+            "baseline/build/Hynobius"
+            "baseline/build/hynobius"
+            "baseline/build/Release/chess-analysis-engine"
+            "baseline/build/Release/Hynobius"
+            "baseline/build/Release/hynobius"
           )
 
-          $candidateCandidates = @(
-            "candidate/build/Release/chess-analysis-engine.exe",
-            "candidate/build/chess-analysis-engine.exe",
-            "candidate/build/Release/Hynobius.exe",
-            "candidate/build/Hynobius.exe"
+          candidate_candidates=(
+            "candidate/build/chess-analysis-engine"
+            "candidate/build/Hynobius"
+            "candidate/build/hynobius"
+            "candidate/build/Release/chess-analysis-engine"
+            "candidate/build/Release/Hynobius"
+            "candidate/build/Release/hynobius"
           )
 
-          $baselineExe = $null
-          foreach ($p in $baselineCandidates) {
-            if (Test-Path $p) {
-              $baselineExe = (Resolve-Path $p).Path
+          baseline_exe=""
+          for p in "${baseline_candidates[@]}"; do
+            if [ -f "$p" ] && [ -x "$p" ]; then
+              baseline_exe="$(realpath "$p")"
               break
-            }
-          }
-          if (-not $baselineExe) { throw "Baseline exe not found" }
+            fi
+          done
 
-          $candidateExe = $null
-          foreach ($p in $candidateCandidates) {
-            if (Test-Path $p) {
-              $candidateExe = (Resolve-Path $p).Path
+          if [ -z "$baseline_exe" ]; then
+            echo "Baseline exe not found"
+            find baseline/build -type f -maxdepth 4
+            exit 1
+          fi
+
+          candidate_exe=""
+          for p in "${candidate_candidates[@]}"; do
+            if [ -f "$p" ] && [ -x "$p" ]; then
+              candidate_exe="$(realpath "$p")"
               break
-            }
-          }
-          if (-not $candidateExe) { throw "Candidate exe not found" }
+            fi
+          done
 
-          "BASELINE_EXE=$baselineExe" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "CANDIDATE_EXE=$candidateExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+          if [ -z "$candidate_exe" ]; then
+            echo "Candidate exe not found"
+            find candidate/build -type f -maxdepth 4
+            exit 1
+          fi
+
+          echo "BASELINE_EXE=$baseline_exe" >> "$GITHUB_ENV"
+          echo "CANDIDATE_EXE=$candidate_exe" >> "$GITHUB_ENV"
+
+          echo "Baseline:  $baseline_exe"
+          echo "Candidate: $candidate_exe"
 
       - name: Validate inputs
-        shell: pwsh
+        shell: bash
         run: |
-          $pairs = [int]"${{ inputs.opening_pairs }}"
-          if ($pairs -le 0) {
-            throw "opening_pairs must be > 0"
-          }
+          pairs="${{ inputs.opening_pairs }}"
+
+          if ! [[ "$pairs" =~ ^[0-9]+$ ]]; then
+            echo "opening_pairs must be an integer"
+            exit 1
+          fi
+
+          if [ "$pairs" -le 0 ]; then
+            echo "opening_pairs must be > 0"
+            exit 1
+          fi
 
       - name: Run paired-opening match
-        shell: pwsh
+        shell: bash
         run: |
-          $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-          $artifactName = "ab-test-${{ github.run_id }}-$timestamp"
-          $pgn = "out/pgn/ab_match_$timestamp.pgn"
-          $txt = "out/results/ab_match_$timestamp.txt"
+          timestamp=$(date -u +"%Y-%m-%d_%H-%M-%S")
+          artifact_name="ab-test-${{ github.run_id }}-$timestamp"
+          pgn="out/pgn/ab_match_$timestamp.pgn"
+          txt="out/results/ab_match_$timestamp.txt"
 
-          $mode = "tc"
-          $pairs = [int]"${{ inputs.opening_pairs }}"
-          $openingFile = "candidate/bench/openings.pgn"
+          pairs="${{ inputs.opening_pairs }}"
+          opening_file="candidate/bench/openings.pgn"
 
-          $eachArgs = @("proto=uci", "tc=10+0.1")
+          if [ ! -f "$opening_file" ]; then
+            echo "Opening file not found: $opening_file"
+            exit 1
+          fi
 
-          $argList = @(
-            "-engine", "name=baseline", "cmd=$env:BASELINE_EXE",
-            "-engine", "name=candidate", "cmd=$env:CANDIDATE_EXE",
-            "-each"
-          ) + $eachArgs + @(
-            "-openings", "file=$openingFile", "format=pgn", "order=random",
-            "-rounds", "$pairs",
-            "-repeat",
-            "-recover",
-            "-resign", "movecount=3", "score=800",
-            "-draw", "movenumber=40", "movecount=8", "score=10",
-            "-pgnout", $pgn
-          )
+          cutechess-cli \
+            -engine name=baseline cmd="$BASELINE_EXE" \
+            -engine name=candidate cmd="$CANDIDATE_EXE" \
+            -each proto=uci tc=10+0.1 \
+            -openings file="$opening_file" format=pgn order=random \
+            -rounds "$pairs" \
+            -repeat \
+            -recover \
+            -resign movecount=3 score=800 \
+            -draw movenumber=40 movecount=8 score=10 \
+            -pgnout "$pgn" \
+            | tee "$txt"
 
-          & "D:\Cute_Chess\cutechess-cli.exe" @argList | Tee-Object -FilePath $txt
+          echo "PGN_FILE=$pgn" >> "$GITHUB_ENV"
+          echo "RESULT_FILE=$txt" >> "$GITHUB_ENV"
+          echo "ARTIFACT_NAME=$artifact_name" >> "$GITHUB_ENV"
 
-          "PGN_FILE=$pgn" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "RESULT_FILE=$txt" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Upload match artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ env.PGN_FILE }}
+            ${{ env.RESULT_FILE }}
