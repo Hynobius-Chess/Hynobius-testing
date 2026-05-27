@@ -1,4 +1,4 @@
-name: AB Test Reusable
+name: Self Play Smoke Test
 
 on:
   workflow_call:
