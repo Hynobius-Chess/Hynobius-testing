@@ -162,7 +162,7 @@ jobs:
       - name: Run AB batch
         shell: powershell
         run: |
-            & "$env:PYTHON_EXE" testing/run_ab.py `
+            & "$env:PYTHON_EXE" testing/tools/run_ab.py `
             --cutechess "cutechess-cli" `
             --baseline $env:BASELINE_EXE `
             --candidate $env:CANDIDATE_EXE `
