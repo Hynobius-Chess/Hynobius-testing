@@ -19,6 +19,8 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yml
+    with:
+      engine_ref: ${{ inputs.engine_ref }}
 
   perft:
     uses: ./.github/workflows/perft_test.yml

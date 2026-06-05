@@ -2,7 +2,19 @@ name: Build Test
 
 on:
   workflow_dispatch:
+    inputs:
+      engine_ref:
+        type: string
+        description: "Engine branch, tag, or commit"
+        required: false
+        default: "main"
   workflow_call:
+    inputs:
+      engine_ref:
+        type: string
+        description: "Engine branch, tag, or commit"
+        required: false
+        default: "main"
 
 jobs:
   linux-build:
@@ -23,6 +35,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          repository: Hynobius-Chess/Hynobius-testing
+          path: testing
 
       - name: Install build tools
         run: |
@@ -60,6 +75,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          repository: Hynobius-Chess/Hynobius-testing
+          path: testing
 
       - name: Configure
         shell: pwsh
@@ -88,6 +106,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          repository: Hynobius-Chess/Hynobius-testing
+          path: testing
 
       - name: Set up MinGW
         shell: pwsh
