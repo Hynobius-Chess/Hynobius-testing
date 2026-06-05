@@ -1,4 +1,4 @@
-name: RC Build Gate
+name: Build Test
 
 on:
   workflow_dispatch:
