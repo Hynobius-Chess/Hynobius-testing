@@ -33,11 +33,11 @@ jobs:
             cxx: clang++
 
     steps:
-      - name: Checkout repository
+      - name: Checkout engine repo
         uses: actions/checkout@v4
         with:
-          repository: Hynobius-Chess/Hynobius-testing
-          path: testing
+          repository: Hynobius-Chess/Hynobius
+          ref: ${{ inputs.engine_ref }}
 
       - name: Install build tools
         run: |
@@ -73,11 +73,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout engine repo
         uses: actions/checkout@v4
         with:
-          repository: Hynobius-Chess/Hynobius-testing
-          path: testing
+          repository: Hynobius-Chess/Hynobius
+          ref: ${{ inputs.engine_ref }}
 
       - name: Configure
         shell: pwsh
@@ -104,11 +104,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout engine repo
         uses: actions/checkout@v4
         with:
-          repository: Hynobius-Chess/Hynobius-testing
-          path: testing
+          repository: Hynobius-Chess/Hynobius
+          ref: ${{ inputs.engine_ref }}
+
 
       - name: Set up MinGW
         shell: pwsh
