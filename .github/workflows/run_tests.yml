@@ -17,6 +17,9 @@ on:
         default: "main"
 
 jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
   perft:
     uses: ./.github/workflows/perft_test.yml
     with:

@@ -1,0 +1,122 @@
+name: RC Build Gate
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  linux-build:
+    name: Linux ${{ matrix.compiler }} Release
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+          - compiler: clang
+            cc: clang
+            cxx: clang++
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake gcc g++ clang
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hynobius-linux-${{ matrix.compiler }}-release
+          path: |
+            build/**/*.exe
+            build/**/Hynobius
+            build/**/hynobius
+            build/**/Hynobius*
+            build/**/hynobius*
+          if-no-files-found: warn
+
+  windows-msvc-build:
+    name: Windows MSVC Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -G "Visual Studio 17 2022" `
+            -A x64
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build --config Release
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hynobius-windows-msvc-release
+          path: |
+            build/**/*.exe
+          if-no-files-found: warn
+
+  windows-mingw-build:
+    name: Windows MinGW GCC Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up MinGW
+        shell: pwsh
+        run: |
+          choco install mingw ninja cmake -y
+
+      - name: Add MinGW to PATH
+        shell: pwsh
+        run: |
+          echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" >> $env:GITHUB_PATH
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_C_COMPILER=gcc `
+            -DCMAKE_CXX_COMPILER=g++
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build --config Release
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hynobius-windows-mingw-release
+          path: |
+            build/**/*.exe
+          if-no-files-found: warn
