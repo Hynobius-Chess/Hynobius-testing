@@ -70,7 +70,7 @@ jobs:
 
   windows-msvc-build:
     name: Windows MSVC Release
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout engine repo
